@@ -1,0 +1,208 @@
+[7.08.2025, 13:51:29] DIRECTORY_CREATED - Created uploads directory: F:\program_wesele\wedding-photos
+[7.08.2025, 13:51:29] SERVER_STARTED - Wedding Photos app started on port 3000
+[7.08.2025, 13:51:29] CONFIG_LOADED - Event: Nasze Wesele 2024, Max file size: 200MB
+[7.08.2025, 13:51:42] QR_GENERATED - QR code generated for: http://localhost:3000/upload
+[7.08.2025, 13:51:42] 404_ERROR - Page not found: /
+[7.08.2025, 13:51:52] DOWNLOAD_ALL_START - Creating ZIP: Nasze-Wesele-2024-2025-08-07.zip
+[7.08.2025, 13:51:52] DOWNLOAD_ALL_COMPLETE - ZIP created successfully, 0MB
+[7.08.2025, 13:52:09] 404_ERROR - Page not found: /
+[7.08.2025, 13:53:35] 404_ERROR - Page not found: /
+[7.08.2025, 13:53:52] UPLOAD_SUCCESS - 1 files uploaded, 3.31MB total
+[7.08.2025, 13:54:31] 404_ERROR - Page not found: /
+[7.08.2025, 13:55:31] 404_ERROR - Page not found: /
+[7.08.2025, 13:56:31] 404_ERROR - Page not found: /
+[7.08.2025, 13:57:13] SERVER_STOPPING - Graceful shutdown initiated
+[7.08.2025, 13:57:14] SERVER_STOPPED - Wedding Photos app stopped gracefully
+[7.08.2025, 14:00:29] SERVER_STARTED - Wedding Photos app started on port 3000
+[7.08.2025, 14:00:29] CONFIG_LOADED - Event: Nasze Wesele 2024, Max file size: 200MB
+[7.08.2025, 14:00:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:00:56] QR_GENERATED - QR code generated for: http://localhost:3000/upload
+[7.08.2025, 14:00:56] 404_ERROR - Page not found: /
+[7.08.2025, 14:01:06] QR_GENERATED - QR code generated for: http://localhost:3000/upload
+[7.08.2025, 14:01:07] QR_GENERATED - QR code generated for: http://localhost:3000/upload
+[7.08.2025, 14:01:08] QR_GENERATED - QR code generated for: http://localhost:3000/upload
+[7.08.2025, 14:01:09] QR_GENERATED - QR code generated for: http://localhost:3000/upload
+[7.08.2025, 14:01:09] QR_GENERATED - QR code generated for: http://localhost:3000/upload
+[7.08.2025, 14:01:09] QR_GENERATED - QR code generated for: http://localhost:3000/upload
+[7.08.2025, 14:01:09] QR_GENERATED - QR code generated for: http://localhost:3000/upload
+[7.08.2025, 14:01:11] QR_GENERATED - QR code generated for: http://localhost:3000/upload
+[7.08.2025, 14:01:11] QR_GENERATED - QR code generated for: http://localhost:3000/upload
+[7.08.2025, 14:01:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:01:35] 404_ERROR - Page not found: /
+[7.08.2025, 14:01:47] UPLOAD_SUCCESS - 1 files uploaded, 0.14MB total
+[7.08.2025, 14:02:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:02:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:03:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:03:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:04:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:04:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:05:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:05:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:06:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:06:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:06:46] SERVER_STOPPING - Graceful shutdown initiated
+[7.08.2025, 14:06:47] SERVER_STOPPED - Wedding Photos app stopped gracefully
+[7.08.2025, 14:14:08] SERVER_STARTED - Wedding Photos app started on port 3000
+[7.08.2025, 14:14:08] CONFIG_LOADED - Event: Nasze Wesele 2024, Max file size: 200MB
+[7.08.2025, 14:14:16] QR_GENERATED - QR code generated for: http://localhost:3000/upload
+[7.08.2025, 14:14:16] 404_ERROR - Page not found: /
+[7.08.2025, 14:14:24] 404_ERROR - Page not found: /
+[7.08.2025, 14:14:26] QR_GENERATED - QR code generated for: http://localhost:3000/upload
+[7.08.2025, 14:14:26] 404_ERROR - Page not found: /
+[7.08.2025, 14:14:29] 404_ERROR - Page not found: /
+[7.08.2025, 14:14:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:14:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:14:33] QR_GENERATED - QR code generated for: http://localhost:3000/upload
+[7.08.2025, 14:14:33] 404_ERROR - Page not found: /
+[7.08.2025, 14:14:36] 404_ERROR - Page not found: /
+[7.08.2025, 14:15:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:15:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:16:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:16:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:17:12] SERVER_STOPPING - Graceful shutdown initiated
+[7.08.2025, 14:17:13] SERVER_STOPPED - Wedding Photos app stopped gracefully
+[7.08.2025, 14:17:15] SERVER_STARTED - Wedding Photos app started on port 3000
+[7.08.2025, 14:17:15] CONFIG_LOADED - Event: Nasze Wesele 2024, Max file size: 200MB
+[7.08.2025, 14:17:27] QR_GENERATED - QR code generated for: http://localhost:3000/upload
+[7.08.2025, 14:17:27] 404_ERROR - Page not found: /
+[7.08.2025, 14:17:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:17:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:17:32] 404_ERROR - Page not found: /
+[7.08.2025, 14:17:36] ERROR - Tylko zdjęcia i filmy są dozwolone
+[7.08.2025, 14:17:42] ERROR - Tylko zdjęcia i filmy są dozwolone
+[7.08.2025, 14:17:49] ERROR - Tylko zdjęcia i filmy są dozwolone
+[7.08.2025, 14:18:32] 404_ERROR - Page not found: /
+[7.08.2025, 14:18:32] 404_ERROR - Page not found: /
+[7.08.2025, 14:19:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:19:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:20:03] SERVER_STOPPING - Graceful shutdown initiated
+[7.08.2025, 14:20:04] SERVER_STOPPED - Wedding Photos app stopped gracefully
+[7.08.2025, 14:20:19] SERVER_STARTED - Wedding Photos app started on port 3000
+[7.08.2025, 14:20:19] CONFIG_LOADED - Event: Nasze Wesele 2024, Max file size: 200MB
+[7.08.2025, 14:20:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:20:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:20:39] QR_GENERATED - QR code generated for: http://localhost:3000/upload
+[7.08.2025, 14:20:39] 404_ERROR - Page not found: /
+[7.08.2025, 14:20:44] 404_ERROR - Page not found: /
+[7.08.2025, 14:20:59] ERROR - Tylko zdjęcia i filmy są dozwolone
+[7.08.2025, 14:21:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:21:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:22:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:22:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:23:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:23:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:23:36] SERVER_STOPPING - Graceful shutdown initiated
+[7.08.2025, 14:23:37] SERVER_STOPPED - Wedding Photos app stopped gracefully
+[7.08.2025, 14:23:41] SERVER_STARTED - Wedding Photos app started on port 3000
+[7.08.2025, 14:23:41] CONFIG_LOADED - Event: Nasze Wesele 2024, Max file size: 200MB
+[7.08.2025, 14:23:55] QR_GENERATED - QR code generated for: http://localhost:3000/upload
+[7.08.2025, 14:23:56] 404_ERROR - Page not found: /
+[7.08.2025, 14:24:03] 404_ERROR - Page not found: /
+[7.08.2025, 14:24:13] ERROR - Tylko zdjęcia i filmy są dozwolone
+[7.08.2025, 14:24:23] ERROR - Tylko zdjęcia i filmy są dozwolone
+[7.08.2025, 14:24:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:24:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:25:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:25:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:26:10] SERVER_STOPPING - Graceful shutdown initiated
+[7.08.2025, 14:26:11] SERVER_STOPPED - Wedding Photos app stopped gracefully
+[7.08.2025, 14:27:51] SERVER_STARTED - Wedding Photos app started on port 3000
+[7.08.2025, 14:27:51] CONFIG_LOADED - Event: Nasze Wesele 2024, Max file size: 200MB
+[7.08.2025, 14:28:08] 404_ERROR - Page not found: /
+[7.08.2025, 14:28:10] QR_GENERATED - QR code generated for: http://localhost:3000/upload
+[7.08.2025, 14:28:11] 404_ERROR - Page not found: /
+[7.08.2025, 14:28:14] QR_GENERATED - QR code generated for: http://localhost:3000/upload
+[7.08.2025, 14:28:16] 404_ERROR - Page not found: /
+[7.08.2025, 14:28:25] ERROR - Tylko zdjęcia i filmy są dozwolone
+[7.08.2025, 14:28:31] ERROR - Tylko zdjęcia i filmy są dozwolone
+[7.08.2025, 14:28:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:28:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:29:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:29:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:30:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:30:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:31:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:31:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:32:18] SERVER_STOPPING - Graceful shutdown initiated
+[7.08.2025, 14:32:19] SERVER_STOPPED - Wedding Photos app stopped gracefully
+[7.08.2025, 14:32:21] SERVER_STARTED - Wedding Photos app started on port 3000
+[7.08.2025, 14:32:21] CONFIG_LOADED - Event: Nasze Wesele 2024, Max file size: 200MB
+[7.08.2025, 14:32:28] 404_ERROR - Page not found: /
+[7.08.2025, 14:33:01] ERROR - Tylko zdjęcia i filmy są dozwolone
+[7.08.2025, 14:33:55] ERROR - Tylko zdjęcia i filmy są dozwolone
+[7.08.2025, 14:34:06] UPLOAD_SUCCESS - 1 files uploaded, 0.47MB total
+[7.08.2025, 14:34:11] QR_GENERATED - QR code generated for: http://localhost:3000/upload
+[7.08.2025, 14:34:12] 404_ERROR - Page not found: /
+[7.08.2025, 14:34:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:35:16] SERVER_STOPPING - Graceful shutdown initiated
+[7.08.2025, 14:35:17] SERVER_STOPPED - Wedding Photos app stopped gracefully
+[7.08.2025, 14:35:19] SERVER_STARTED - Wedding Photos app started on port 3000
+[7.08.2025, 14:35:19] CONFIG_LOADED - Event: Nasze Wesele 2024, Max file size: 200MB
+[7.08.2025, 14:35:29] QR_GENERATED - QR code generated for: http://localhost:3000/upload
+[7.08.2025, 14:35:29] 404_ERROR - Page not found: /
+[7.08.2025, 14:35:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:35:33] 404_ERROR - Page not found: /
+[7.08.2025, 14:35:37] FILE_ACCEPTED_HEIC - IMG_9191.HEIC (application/octet-stream)
+[7.08.2025, 14:35:37] FILE_ACCEPTED_HEIC - IMG_9192.HEIC (application/octet-stream)
+[7.08.2025, 14:35:37] FILE_ACCEPTED_HEIC - IMG_9193.HEIC (application/octet-stream)
+[7.08.2025, 14:35:37] FILE_ACCEPTED_HEIC - IMG_9194.HEIC (application/octet-stream)
+[7.08.2025, 14:35:37] UPLOAD_SUCCESS - 4 files uploaded, 9.34MB total
+[7.08.2025, 14:35:43] FILE_ACCEPTED_HEIC - IMG_9213.HEIC (application/octet-stream)
+[7.08.2025, 14:35:43] FILE_ACCEPTED_HEIC - IMG_9214.HEIC (application/octet-stream)
+[7.08.2025, 14:35:43] FILE_ACCEPTED_HEIC - IMG_9220.HEIC (application/octet-stream)
+[7.08.2025, 14:35:43] FILE_ACCEPTED_HEIC - IMG_9221.HEIC (application/octet-stream)
+[7.08.2025, 14:35:43] UPLOAD_SUCCESS - 4 files uploaded, 9.14MB total
+[7.08.2025, 14:36:24] FILE_ACCEPTED_HEIC - IMG_8356.HEIC (application/octet-stream)
+[7.08.2025, 14:36:24] FILE_ACCEPTED_HEIC - IMG_8357.HEIC (application/octet-stream)
+[7.08.2025, 14:36:25] FILE_ACCEPTED_HEIC - IMG_8358.HEIC (application/octet-stream)
+[7.08.2025, 14:36:25] FILE_ACCEPTED_HEIC - IMG_8359.HEIC (application/octet-stream)
+[7.08.2025, 14:36:25] FILE_ACCEPTED_HEIC - IMG_8363.HEIC (application/octet-stream)
+[7.08.2025, 14:36:25] FILE_ACCEPTED_HEIC - IMG_8364.HEIC (application/octet-stream)
+[7.08.2025, 14:36:25] FILE_ACCEPTED_HEIC - IMG_8365.HEIC (application/octet-stream)
+[7.08.2025, 14:36:25] FILE_ACCEPTED_HEIC - IMG_8366.HEIC (application/octet-stream)
+[7.08.2025, 14:36:25] UPLOAD_SUCCESS - 8 files uploaded, 16.65MB total
+[7.08.2025, 14:36:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:36:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:36:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:36:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:36:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:36:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:36:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:36:32] 404_ERROR - Page not found: /
+[7.08.2025, 14:36:32] 404_ERROR - Page not found: /
+[7.08.2025, 14:36:32] 404_ERROR - Page not found: /
+[7.08.2025, 14:36:32] 404_ERROR - Page not found: /
+[7.08.2025, 14:36:32] 404_ERROR - Page not found: /
+[7.08.2025, 14:36:32] 404_ERROR - Page not found: /
+[7.08.2025, 14:36:32] 404_ERROR - Page not found: /
+[7.08.2025, 14:36:32] 404_ERROR - Page not found: /
+[7.08.2025, 14:36:32] 404_ERROR - Page not found: /
+[7.08.2025, 14:36:32] 404_ERROR - Page not found: /
+[7.08.2025, 14:36:38] FILE_ACCEPTED_HEIC - IMG_8323.HEIC (application/octet-stream)
+[7.08.2025, 14:36:38] FILE_ACCEPTED_HEIC - IMG_8324.HEIC (application/octet-stream)
+[7.08.2025, 14:36:38] FILE_ACCEPTED_HEIC - IMG_8325.HEIC (application/octet-stream)
+[7.08.2025, 14:36:38] FILE_ACCEPTED_HEIC - IMG_8326.HEIC (application/octet-stream)
+[7.08.2025, 14:36:38] UPLOAD_SUCCESS - 4 files uploaded, 10.49MB total
+[7.08.2025, 14:37:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:37:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:37:31] 404_ERROR - Page not found: /
+[7.08.2025, 14:37:32] 404_ERROR - Page not found: /
+[7.08.2025, 14:37:32] 404_ERROR - Page not found: /
+[7.08.2025, 14:37:32] 404_ERROR - Page not found: /
+[7.08.2025, 14:37:32] 404_ERROR - Page not found: /
+[7.08.2025, 14:37:32] 404_ERROR - Page not found: /
+[7.08.2025, 14:37:32] 404_ERROR - Page not found: /
+[7.08.2025, 14:37:32] 404_ERROR - Page not found: /
+[7.08.2025, 14:37:32] 404_ERROR - Page not found: /
+[7.08.2025, 14:37:32] 404_ERROR - Page not found: /
+[7.08.2025, 14:37:33] 404_ERROR - Page not found: /
+[7.08.2025, 14:37:33] 404_ERROR - Page not found: /
+[7.08.2025, 14:37:33] 404_ERROR - Page not found: /
+[7.08.2025, 14:37:33] 404_ERROR - Page not found: /
+[7.08.2025, 14:37:33] 404_ERROR - Page not found: /
+[7.08.2025, 14:37:33] 404_ERROR - Page not found: /
+[7.08.2025, 14:37:33] 404_ERROR - Page not found: /
+[7.08.2025, 14:37:33] 404_ERROR - Page not found: /
+[7.08.2025, 14:37:33] 404_ERROR - Page not found: /
+[7.08.2025, 14:38:30] SERVER_STOPPING - Graceful shutdown initiated
+[7.08.2025, 14:38:31] SERVER_STOPPED - Wedding Photos app stopped gracefully
