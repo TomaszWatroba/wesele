@@ -1,10 +1,13 @@
-// config.js - Centralna konfiguracja aplikacji
+// config.js - Updated to support dynamic URLs
 const path = require('path');
 
 module.exports = {
     // Podstawowe ustawienia
     PORT: 3000,
-    EVENT_NAME: 'Nasze Wesele 2024', // ZMIEŃ NA SWOJĄ NAZWĘ
+    EVENT_NAME: 'Nasze Wesele 2025', // ZMIEŃ NA SWOJĄ NAZWĘ
+    
+    // Dynamic URL configuration
+    PUBLIC_URL: process.env.PUBLIC_URL || null, // Will be set dynamically
     
     // Ścieżki
     UPLOADS_DIR: path.join(__dirname, 'wedding-photos'),
@@ -58,5 +61,33 @@ module.exports = {
             light: '#FFFFFF'
         },
         errorCorrectionLevel: 'M'
+    },
+    
+    // Timeout dla upload (5 minut)
+    UPLOAD_TIMEOUT: 5 * 60 * 1000,
+    
+    // Function to get the correct base URL
+    getBaseURL: function(req) {
+        // If PUBLIC_URL is set via environment variable, use it
+        if (this.PUBLIC_URL) {
+            return this.PUBLIC_URL;
+        }
+        
+        // Try to detect tunnel URL from headers
+        const forwardedHost = req.get('CF-Visitor') || req.get('X-Forwarded-Host');
+        const originalHost = req.get('Host');
+        
+        // If we detect Cloudflare tunnel
+        if (originalHost && originalHost.includes('trycloudflare.com')) {
+            return `https://${originalHost}`;
+        }
+        
+        // If we have forwarded host info
+        if (forwardedHost) {
+            return `https://${forwardedHost}`;
+        }
+        
+        // Default to localhost
+        return `http://localhost:${this.PORT}`;
     }
 };
