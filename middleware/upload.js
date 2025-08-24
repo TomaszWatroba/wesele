@@ -67,12 +67,33 @@ const fileFilter = (req, file, cb) => {
         return cb(new Error('Plik za duży'));
     }
     
+    // Enhanced file type validation
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', 
+                              '.heic', '.heif', '.tiff', '.tif',
+                              '.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v'];
+    
+    const isValidExtension = allowedExtensions.includes(ext);
+    const isValidMimeType = mimeType.startsWith('image/') || mimeType.startsWith('video/') ||
+                           mimeType === 'image/heic' || mimeType === 'image/heif' ||
+                           mimeType === '' || mimeType === 'application/octet-stream'; // Allow unknown MIME for HEIC
+    
+    if (!isValidExtension && !isValidMimeType) {
+        const errorMsg = `Unsupported file type: ${ext} (${mimeType})`;
+        logFileUpload('File rejected - unsupported type', [file], requestId, {
+            reason: 'Unsupported file type',
+            extension: ext,
+            mimetype: mimeType
+        });
+        return cb(new Error('Nieobsługiwany typ pliku - tylko zdjęcia i filmy'));
+    }
+    
     // Accept file
     logActivity('SUCCESS', 'File validation passed', 
         `${file.originalname} (${mimeType || 'no MIME'})`, requestId);
     logFileUpload('File accepted', [file], requestId, {
         mimetype: mimeType,
-        size: file.size
+        size: file.size,
+        extension: ext
     });
     
     cb(null, true);

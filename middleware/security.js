@@ -13,15 +13,7 @@ const uploadLimiter = rateLimit({
     standardHeaders: false,
     legacyHeaders: false,
     
-    // Enhanced logging for rate limiting
-    onLimitReached: (req) => {
-        logSecurityEvent(
-            'Rate limit exceeded', 
-            `IP: ${req.ip}, User-Agent: ${req.get('User-Agent')}`,
-            req.requestId,
-            'WARN'
-        );
-    },
+    // Enhanced logging for rate limiting handled in handler below
     
     // Log when someone is close to limit
     skip: (req) => {

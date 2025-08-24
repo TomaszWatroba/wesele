@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wedding Photo Upload</title>
+    <link rel="stylesheet" href="/css/upload.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📸 Share Your Wedding Photos</h1>
+        
+        <form id="uploadForm" enctype="multipart/form-data">
+            <div class="upload-area" id="uploadArea">
+                <p>📷 Drag and drop your photos and videos here</p>
+                <p>or</p>
+                <button type="button" class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                    Choose Photos & Videos
+                </button>
+                <input type="file" id="fileInput" name="photos" multiple accept="image/*,video/*,.heic,.heif">
+            </div>
+        </form>
+        
+        <div class="progress" id="progressContainer">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        
+        <div class="status" id="status"></div>
+        
+        <div id="uploadedPhotos"></div>
+    </div>
+
+    <script src="/js/upload.js"></script>
+</body>
+</html>

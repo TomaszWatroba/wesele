@@ -1,58 +1,44 @@
-// config.js - Updated to support dynamic URLs
 const path = require('path');
 
 module.exports = {
-    // Podstawowe ustawienia
-    PORT: 3000,
-    EVENT_NAME: 'Nasze Wesele 2025', // ZMIEŃ NA SWOJĄ NAZWĘ
+    // Wedding Details
+    EVENT_NAME: 'Gosia & Tomek 2025',
+    COUPLE_NAMES: {
+        bride: 'Gosia',
+        groom: 'Tomek'
+    },
+    WEDDING_DATE: '2025-08-15', // Update with actual date
+    VENUE: 'Beautiful Wedding Venue', // Update with actual venue
     
-    // Dynamic URL configuration
-    PUBLIC_URL: process.env.PUBLIC_URL || null, // Will be set dynamically
+    // Server Configuration
+    PORT: process.env.PORT || 3000,
+    DOMAIN: process.env.WEDDING_DOMAIN || 'gosiaitomek.pl',
     
-    // Ścieżki
+    // Admin Security
+    ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'wedding2025!', // CHANGE THIS!
+    ADMIN_SESSION_SECRET: process.env.ADMIN_SECRET || 'your-secret-key-here',
+    
+    // File Configuration
     UPLOADS_DIR: path.join(__dirname, 'wedding-photos'),
     LOG_FILE: path.join(__dirname, 'wedding-log.txt'),
-    
-    // Limity plików
     MAX_FILE_SIZE: 200 * 1024 * 1024, // 200MB
     MAX_FILES_PER_UPLOAD: 10,
     
-    // Rate limiting
+    // Rate Limiting
     RATE_LIMIT: {
-        WINDOW_MS: 5 * 60 * 1000, // 5 minut
-        MAX_UPLOADS: 20 // 20 przesłań na okno czasowe
+        WINDOW_MS: 5 * 60 * 1000, // 5 minutes
+        MAX_UPLOADS: 20
     },
     
-    // Dozwolone typy plików - WSZYSTKIE formaty mobilne
-    ALLOWED_FILE_TYPES: [
-        // Zdjęcia - standardowe
-        'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
-        // Zdjęcia - iPhone/mobilne
-        'image/heic', 'image/heif', 'image/heics', 'image/heifs',
-        // Zdjęcia - inne mobilne formaty
-        'image/avif', 'image/jfif', 'image/pjpeg', 'image/svg+xml',
-        // Zdjęcia - raw formaty (niektóre telefony)
-        'image/tiff', 'image/bmp', 'image/x-icon',
-        // Filmy - standardowe
-        'video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo',
-        // Filmy - mobilne
-        'video/mov', 'video/3gpp', 'video/3gpp2', 'video/x-flv',
-        // Filmy - inne popularne
-        'video/avi', 'video/mkv', 'video/webm', 'video/ogg', 'video/wmv'
-    ],
-    
-    // Rozszerzenia plików - wszystkie mobilne
+    // File Types
     ALLOWED_EXTENSIONS: [
-        // Zdjęcia
         '.jpg', '.jpeg', '.png', '.gif', '.webp', 
         '.heic', '.heif', '.heics', '.heifs', '.avif',
-        '.jfif', '.pjpeg', '.tiff', '.tif', '.bmp',
-        // Filmy  
         '.mp4', '.mov', '.avi', '.mkv', '.webm', 
-        '.3gp', '.3g2', '.m4v', '.wmv', '.flv', '.ogv'
+        '.3gp', '.3g2', '.m4v'
     ],
     
-    // QR Code settings
+    // QR Code Settings
     QR_OPTIONS: {
         width: 400,
         margin: 3,
@@ -63,31 +49,41 @@ module.exports = {
         errorCorrectionLevel: 'M'
     },
     
-    // Timeout dla upload (5 minut)
-    UPLOAD_TIMEOUT: 5 * 60 * 1000,
+    // Website Content Configuration
+    MENU_ITEMS: [
+        { 
+            name: 'Przystawki',
+            items: [
+                'Tatar z łososia z awokado',
+                'Bruschetta z pomidorami',
+                'Sery regionalne z miodem'
+            ]
+        },
+        {
+            name: 'Dania główne',
+            items: [
+                'Filet z dorsza w ziołach',
+                'Polędwica wołowa z grilla',
+                'Risotto z grzybami leśnymi (wegetariańskie)'
+            ]
+        }
+    ],
     
-    // Function to get the correct base URL
+    DRINKS: [
+        { category: 'Koktajle firmowe', items: ['Gosia & Tomek Spritz', 'Sunset Love'] },
+        { category: 'Wina', items: ['Białe półwytrawne', 'Czerwone wytrawne'] },
+        { category: 'Napoje bezalkoholowe', items: ['Woda gazowana/niegazowana', 'Soki świeże'] }
+    ],
+    
+    // Helper function for base URL
     getBaseURL: function(req) {
-        // If PUBLIC_URL is set via environment variable, use it
-        if (this.PUBLIC_URL) {
-            return this.PUBLIC_URL;
+        const host = req.get('host') || 'localhost:3000';
+        const protocol = req.secure || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
+        
+        if (host.includes('gosiaitomek.pl') || host.includes('trycloudflare.com')) {
+            return `https://${host}`;
         }
         
-        // Try to detect tunnel URL from headers
-        const forwardedHost = req.get('CF-Visitor') || req.get('X-Forwarded-Host');
-        const originalHost = req.get('Host');
-        
-        // If we detect Cloudflare tunnel
-        if (originalHost && originalHost.includes('trycloudflare.com')) {
-            return `https://${originalHost}`;
-        }
-        
-        // If we have forwarded host info
-        if (forwardedHost) {
-            return `https://${forwardedHost}`;
-        }
-        
-        // Default to localhost
-        return `http://localhost:${this.PORT}`;
+        return `${protocol}://${host}`;
     }
 };

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wedding Photo Admin Panel</title>
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎉 Wedding Photo Admin Panel</h1>
+        
+        <!-- Tunnel Status Section -->
+        <div class="section">
+            <h2>📡 Connection Status</h2>
+            <div class="tunnel-status" id="tunnelStatus">
+                <div class="indicator inactive" id="statusIndicator"></div>
+                <span id="statusText">Checking connection...</span>
+            </div>
+            <div class="url-info" id="urlInfo">
+                <strong>Current URL:</strong> <span id="currentUrl">Loading...</span>
+            </div>
+            <button class="btn" id="refreshBtn">
+                🔄 Refresh Status
+            </button>
+        </div>
+        
+        <!-- QR Code Generator Section -->
+        <div class="section">
+            <h2>📱 QR Code Generator</h2>
+            <div class="qr-generator">
+                <div class="qr-controls">
+                    <button class="btn" id="generateBtn">
+                        📷 Generate Upload QR Code
+                    </button>
+                    <button class="btn download" id="downloadBtn" disabled>
+                        💾 Download PNG
+                    </button>
+                </div>
+                
+                <div class="qr-display" id="qrDisplay">
+                    <p style="color: #666;">Click "Generate Upload QR Code" to create a QR code</p>
+                </div>
+                
+                <div id="qrInfo" style="display: none;">
+                    <p><strong>QR Code URL:</strong> <span id="qrUrl"></span></p>
+                    <p style="font-size: 14px; color: #666;">
+                        Share this QR code with guests so they can easily upload photos to your wedding album!
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Files Gallery Section -->
+        <div class="section">
+            <h2>🖼️ Files Gallery</h2>
+            <div class="gallery-controls">
+                <button class="btn" id="refreshGalleryBtn">
+                    🔄 Refresh Gallery
+                </button>
+                <button class="btn download" id="downloadAllBtn">
+                    📦 Download All Files
+                </button>
+                <div class="gallery-stats" id="galleryStats">
+                    Loading files...
+                </div>
+            </div>
+            
+            <div class="gallery-grid" id="galleryGrid">
+                <p>Click "Refresh Gallery" to load uploaded files...</p>
+            </div>
+        </div>
+        
+        <!-- Status Messages -->
+        <div id="statusMessages"></div>
+    </div>
+
+    <script src="/js/admin.js"></script>
+</body>
+</html>

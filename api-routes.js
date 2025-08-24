@@ -15,11 +15,58 @@ const { uploadLimiter, upload, debugUpload } = require('./middleware');
 
 const router = express.Router();
 
+
+const detectTunnel = (req) => {
+    console.log('🔍 FULL DEBUG - All Request Headers:');
+    console.log(JSON.stringify(req.headers, null, 2));
+    
+    const hostHeader = req.headers.host || '';
+    
+    // Multiple detection methods
+    const detectionMethods = {
+        hasCloudflareHeaders: Object.keys(req.headers).some(h => h.toLowerCase().startsWith('cf-')),
+        hasXForwardedProto: !!req.headers['x-forwarded-proto'],
+        isHTTPS: req.headers['x-forwarded-proto'] === 'https' || req.secure || req.connection?.encrypted,
+        hasCloudflareRay: !!req.headers['cf-ray'],
+        hasCloudflareIP: !!req.headers['cf-connecting-ip'],
+        isTunnelDomain: hostHeader.includes('gosiaitomek.redirectme.net'),
+        isQuickTunnel: hostHeader.includes('trycloudflare.com'), // Detect quick tunnels
+        hasForwardedFor: !!req.headers['x-forwarded-for']
+    };
+    
+    console.log('🔍 Detection Methods Results:', detectionMethods);
+    
+    // Determine if tunnel is active
+    const tunnelActive = 
+        detectionMethods.hasCloudflareHeaders ||
+        detectionMethods.hasCloudflareRay ||
+        detectionMethods.hasCloudflareIP ||
+        detectionMethods.isQuickTunnel || // Add quick tunnel detection
+        (detectionMethods.isTunnelDomain && detectionMethods.isHTTPS) ||
+        (detectionMethods.isTunnelDomain && detectionMethods.hasXForwardedProto);
+    
+    console.log('🔍 FINAL TUNNEL DECISION:', {
+        tunnelActive,
+        reasoning: tunnelActive ? 'Found tunnel indicators' : 'No tunnel indicators found'
+    });
+    
+    return {
+        tunnelActive,
+        isLocal: !tunnelActive,
+        isTunnel: tunnelActive,
+        debug: {
+            detectionMethods,
+            hostHeader
+        }
+    };
+};
+module.exports = { detectTunnel };
+
 // 📤 Enhanced file upload endpoint with detailed logging
 router.post('/upload', (req, res, next) => {
     console.log('🚨 UPLOAD ROUTE HIT!');
     next();
-}, uploadLimiter, debugUpload, upload.array('files'), (req, res) => {
+}, uploadLimiter, debugUpload, upload.array('photos'), (req, res) => {
     const requestId = req.requestId;
     const uploadPerf = performanceLogger('fileUpload');
     
@@ -239,29 +286,271 @@ router.get('/qr-download', async (req, res) => {
     }
 });
 
-// 🌐 Endpoint to get current public URL info
-router.get('/public-url', (req, res) => {
+// 📱 Enhanced QR code generation for admin panel
+router.get('/qr-upload', async (req, res) => {
     const requestId = req.requestId;
+    const qrPerf = performanceLogger('generateQRUpload');
     
-    console.log('🌐 Public URL info requested');
+    console.log('📱 QR Upload generation requested');
     
-    const host = req.get('Host');
-    let detectedURL;
+    try {
+        // Use the same tunnel detection logic as public-url endpoint
+        const tunnelInfo = detectTunnel(req);
+        
+        // 🔧 FORCE tunnel detection for permanent URL
+        const forceTunnel = req.query.force === 'tunnel' || 
+                           req.headers.host?.includes('gosiaitomek.redirectme.net') ||
+                           process.env.FORCE_TUNNEL === 'true';
+        
+        if (forceTunnel) {
+            console.log('🔧 FORCING tunnel detection for QR generation');
+            tunnelInfo.tunnelActive = true;
+        }
+        
+        // ALWAYS use your permanent domain when tunnel is active (forced or real)
+        let uploadURL;
+        
+        if (tunnelInfo.tunnelActive) {
+            uploadURL = 'https://gosiaitomek.redirectme.net/upload';
+            console.log('🌐 Using PERMANENT tunnel URL for QR:', uploadURL);
+        } else {
+            uploadURL = `http://localhost:${config.PORT}/upload`;
+            console.log('🏠 Using localhost URL for QR:', uploadURL);
+        }
+        
+        // Generate QR code as data URL
+        const qrDataUrl = await QRCode.toDataURL(uploadURL, {
+            ...config.QR_OPTIONS,
+            width: 256,
+            margin: 2,
+            errorCorrectionLevel: 'M' // Medium error correction for printing
+        });
+        
+        qrPerf.end(`for URL: ${uploadURL}`);
+        
+        logActivity('SUCCESS', 'QR code generated for admin', '', requestId, {
+            url: uploadURL,
+            isTunnel: tunnelInfo.tunnelActive,
+            forceTunnel: forceTunnel,
+            isPermanentDomain: uploadURL.includes('gosiaitomek.redirectme.net'),
+            qrSize: qrDataUrl.length
+        });
+        
+        res.json({
+            success: true,
+            qrCode: qrDataUrl,
+            uploadUrl: uploadURL,
+            message: tunnelInfo.tunnelActive ? 
+                'QR code generated with PERMANENT tunnel URL - Ready for printing!' : 
+                'QR code generated with localhost URL',
+            isTunnel: tunnelInfo.tunnelActive,
+            isPermanentUrl: uploadURL.includes('gosiaitomek.redirectme.net'),
+            requestId: requestId
+        });
+        
+    } catch (error) {
+        console.error('❌ QR generation error:', error);
+        logError(error, 'QR upload generation failed', requestId);
+        res.status(500).json({ 
+            success: false,
+            error: 'Failed to generate QR code',
+            code: 'QR_GENERATION_ERROR',
+            requestId: requestId
+        });
+    }
+});
+
+
+// Helper function to detect tunnel status (add this near the top of your file)
+function detectTunnelStatus(req) {
+    const host = req.get('host') || '';
+    const weddingDomain = req.weddingDomain || '';
+    const forceTunnel = req.forceTunnel || false;
     
-    if (host && host.includes('trycloudflare.com')) {
-        detectedURL = `https://${host}`;
-    } else {
-        detectedURL = `http://localhost:${config.PORT}`;
+    // Force tunnel mode via environment variable
+    if (forceTunnel) {
+        return {
+            tunnelActive: true,
+            detectionMethod: 'environment_variable'
+        };
     }
     
-    const uploadURL = `${detectedURL}/upload`;
+    // Force tunnel mode via query parameter
+    if (req.query.force === 'tunnel') {
+        return {
+            tunnelActive: true,
+            detectionMethod: 'query_parameter'
+        };
+    }
+    
+    // Check if host matches DuckDNS domain
+    if (host.includes('.duckdns.org')) {
+        return {
+            tunnelActive: true,
+            detectionMethod: 'duckdns_domain'
+        };
+    }
+    
+    // Check if using custom wedding domain
+    if (weddingDomain && weddingDomain !== 'localhost:3000' && host.includes(weddingDomain.split(':')[0])) {
+        return {
+            tunnelActive: true,
+            detectionMethod: 'custom_domain'
+        };
+    }
+    
+    // Default to local
+    return {
+        tunnelActive: false,
+        detectionMethod: 'localhost_detected'
+    };
+}
+
+// Update your /public-url endpoint (replace existing one):
+router.get('/public-url', (req, res) => {
+    const requestId = req.requestId || 'no-id';
+    const host = req.get('host') || 'localhost:3000';
+    const protocol = req.secure || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
+    
+    const tunnelStatus = detectTunnelStatus(req);
+    
+    let uploadURL;
+    if (tunnelStatus.tunnelActive) {
+        // Use the wedding domain (DuckDNS or custom)
+        const domain = req.weddingDomain || host;
+        uploadURL = `https://${domain}/upload`;
+    } else {
+        // Local development
+        uploadURL = `${protocol}://${host}/upload`;
+    }
+    
+    logActivity('INFO', 'Public URL requested', '', requestId, {
+        host: host,
+        uploadURL: uploadURL,
+        tunnelActive: tunnelStatus.tunnelActive,
+        detectionMethod: tunnelStatus.detectionMethod,
+        weddingDomain: req.weddingDomain
+    });
+    
+    res.json({
+        uploadURL: uploadURL,
+        tunnelActive: tunnelStatus.tunnelActive,
+        detectionMethod: tunnelStatus.detectionMethod,
+        host: host,
+        weddingDomain: req.weddingDomain,
+        forceTunnel: req.forceTunnel,
+        timestamp: new Date().toISOString()
+    });
+});
+
+// Update your /qr-upload endpoint (replace existing one):
+router.get('/qr-upload', async (req, res) => {
+    const requestId = req.requestId || 'no-id';
+    
+    try {
+        logActivity('INFO', 'QR code generation started', '', requestId);
+        
+        const host = req.get('host') || 'localhost:3000';
+        const protocol = req.secure || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
+        
+        const tunnelStatus = detectTunnelStatus(req);
+        
+        let uploadURL;
+        if (tunnelStatus.tunnelActive) {
+            // Use the wedding domain (DuckDNS or custom)
+            const domain = req.weddingDomain || host;
+            uploadURL = `https://${domain}/upload`;
+        } else {
+            // Local development
+            uploadURL = `${protocol}://${host}/upload`;
+        }
+        
+        // Generate QR code
+        const QRCode = require('qrcode');
+        const qrCodeDataURL = await QRCode.toDataURL(uploadURL, {
+            errorCorrectionLevel: 'M',
+            type: 'image/png',
+            quality: 0.92,
+            margin: 1,
+            color: {
+                dark: '#000000',
+                light: '#FFFFFF'
+            },
+            width: 512
+        });
+        
+        logActivity('SUCCESS', 'QR code generated', uploadURL, requestId, {
+            tunnelActive: tunnelStatus.tunnelActive,
+            detectionMethod: tunnelStatus.detectionMethod,
+            weddingDomain: req.weddingDomain,
+            qrDataLength: qrCodeDataURL.length
+        });
+        
+        res.json({
+            success: true,
+            qrCode: qrCodeDataURL,
+            uploadUrl: uploadURL,
+            tunnelActive: tunnelStatus.tunnelActive,
+            detectionMethod: tunnelStatus.detectionMethod,
+            weddingDomain: req.weddingDomain,
+            message: tunnelStatus.tunnelActive ? 
+                `QR code generated with DuckDNS URL: ${uploadURL}` : 
+                `QR code generated with local URL: ${uploadURL}`
+        });
+        
+    } catch (error) {
+        logError(error, 'QR code generation failed', requestId);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to generate QR code',
+            details: error.message
+        });
+    }
+});
+
+// 🌐 Endpoint to get current public URL info
+router.get('/public-url', (req, res) => {
+    const requestId = req.requestId || 'no-id';
+    
+    logActivity('DEBUG', 'API route accessed', 'GET /public-url', requestId);
+    console.log('🌐 Public URL info requested');
+    
+    // Use improved tunnel detection
+    const tunnelInfo = detectTunnel(req);
+    
+    // 🔧 TEMPORARY FIX: Force tunnel detection
+    // Remove this once DNS is working
+    const forceTunnel = req.query.force === 'tunnel' || 
+                       req.headers.host?.includes('gosiaitomek.redirectme.net') ||
+                       process.env.FORCE_TUNNEL === 'true';
+    
+    if (forceTunnel) {
+        console.log('🔧 FORCING tunnel detection');
+        tunnelInfo.tunnelActive = true;
+        tunnelInfo.isLocal = false;
+        tunnelInfo.isTunnel = true;
+    }
+    
+    // Determine the base URL
+    let baseURL, uploadURL;
+    
+    if (tunnelInfo.tunnelActive) {
+        // Tunnel is active - use the public domain
+        baseURL = 'https://gosiaitomek.redirectme.net';
+        uploadURL = 'https://gosiaitomek.redirectme.net/upload';
+    } else {
+        // No tunnel - use localhost
+        baseURL = 'http://localhost:3000';
+        uploadURL = 'http://localhost:3000/upload';
+    }
     
     const urlInfo = {
-        baseURL: detectedURL,
-        uploadURL: uploadURL,
-        isLocal: detectedURL.includes('localhost'),
-        isTunnel: detectedURL.includes('trycloudflare.com'),
-        requestId: requestId
+        baseURL,
+        uploadURL,
+        isLocal: !tunnelInfo.tunnelActive,
+        isTunnel: tunnelInfo.tunnelActive,
+        tunnelActive: tunnelInfo.tunnelActive,
+        requestId
     };
     
     console.log('📋 URL info:', urlInfo);
@@ -615,6 +904,180 @@ router.get('/status', (req, res) => {
             online: false,
             error: 'Status check failed',
             timestamp: new Date().toISOString(),
+            requestId: requestId
+        });
+    }
+});
+
+// 🖼️ Image preview endpoint with HEIC support
+router.get('/preview/:filename', async (req, res) => {
+    const requestId = req.requestId;
+    const filename = req.params.filename;
+    const size = parseInt(req.query.size) || 300; // Default thumbnail size
+    
+    logActivity('DEBUG', 'Image preview requested', filename, requestId, {
+        requestedSize: size
+    });
+    
+    try {
+        const path = require('path');
+        const fs = require('fs');
+        const filePath = path.join(config.UPLOADS_DIR, filename);
+        
+        // Check if file exists
+        if (!fs.existsSync(filePath)) {
+            logActivity('WARN', 'Preview file not found', filename, requestId);
+            return res.status(404).json({ 
+                error: 'File not found',
+                code: 'FILE_NOT_FOUND',
+                requestId: requestId
+            });
+        }
+        
+        const fileExt = path.extname(filename).toLowerCase();
+        const isHEIC = ['.heic', '.heif'].includes(fileExt);
+        const isImage = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff', '.tif'].includes(fileExt);
+        const isVideo = ['.mp4', '.mov', '.avi'].includes(fileExt);
+        
+        // For HEIC files, convert to JPEG for browser display
+        if (isHEIC) {
+            logActivity('DEBUG', 'HEIC file conversion requested', filename, requestId);
+            
+            try {
+                const heicConvert = require('heic-convert');
+                const sharp = require('sharp');
+                
+                // Read HEIC file
+                const heicBuffer = fs.readFileSync(filePath);
+                
+                // Convert HEIC to JPEG
+                const jpegBuffer = await heicConvert({
+                    buffer: heicBuffer,
+                    format: 'JPEG',
+                    quality: 0.8
+                });
+                
+                // Resize if needed for thumbnails
+                const resizedBuffer = await sharp(jpegBuffer)
+                    .resize(size, size, { 
+                        fit: 'inside', 
+                        withoutEnlargement: true 
+                    })
+                    .jpeg({ quality: 85 })
+                    .toBuffer();
+                
+                logActivity('SUCCESS', 'HEIC converted to JPEG', filename, requestId, {
+                    originalSize: `${Math.round(heicBuffer.length / 1024)}KB`,
+                    convertedSize: `${Math.round(resizedBuffer.length / 1024)}KB`,
+                    targetSize: `${size}x${size}`
+                });
+                
+                res.setHeader('Content-Type', 'image/jpeg');
+                res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
+                return res.send(resizedBuffer);
+                
+            } catch (conversionError) {
+                logError(conversionError, 'HEIC conversion failed', requestId);
+                
+                // Fallback: try to serve original HEIC file
+                logActivity('WARN', 'HEIC conversion failed, serving original', filename, requestId);
+                res.setHeader('Content-Type', 'image/heic');
+                res.setHeader('Cache-Control', 'public, max-age=86400');
+                return res.sendFile(filePath);
+            }
+        }
+        
+        // For standard images, resize for thumbnails if requested
+        if (isImage) {
+            logActivity('DEBUG', 'Standard image preview', filename, requestId);
+            
+            try {
+                // If size is specified and it's a thumbnail request, resize the image
+                if (size < 800) {
+                    const sharp = require('sharp');
+                    const imageBuffer = fs.readFileSync(filePath);
+                    
+                    const resizedBuffer = await sharp(imageBuffer)
+                        .resize(size, size, { 
+                            fit: 'inside', 
+                            withoutEnlargement: true 
+                        })
+                        .jpeg({ quality: 85 })
+                        .toBuffer();
+                    
+                    logActivity('DEBUG', 'Image resized for thumbnail', filename, requestId, {
+                        originalSize: `${Math.round(imageBuffer.length / 1024)}KB`,
+                        thumbnailSize: `${Math.round(resizedBuffer.length / 1024)}KB`,
+                        targetSize: `${size}x${size}`
+                    });
+                    
+                    res.setHeader('Content-Type', 'image/jpeg');
+                    res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
+                    return res.send(resizedBuffer);
+                } else {
+                    // Serve original image for full-size requests
+                    const mimeTypes = {
+                        '.jpg': 'image/jpeg',
+                        '.jpeg': 'image/jpeg',
+                        '.png': 'image/png',
+                        '.gif': 'image/gif',
+                        '.webp': 'image/webp',
+                        '.bmp': 'image/bmp',
+                        '.tiff': 'image/tiff',
+                        '.tif': 'image/tiff'
+                    };
+                    
+                    res.setHeader('Content-Type', mimeTypes[fileExt] || 'image/jpeg');
+                    res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
+                    return res.sendFile(filePath);
+                }
+            } catch (resizeError) {
+                logError(resizeError, 'Image resize failed, serving original', requestId);
+                
+                // Fallback to original file
+                const mimeTypes = {
+                    '.jpg': 'image/jpeg',
+                    '.jpeg': 'image/jpeg',
+                    '.png': 'image/png',
+                    '.gif': 'image/gif',
+                    '.webp': 'image/webp',
+                    '.bmp': 'image/bmp',
+                    '.tiff': 'image/tiff',
+                    '.tif': 'image/tiff'
+                };
+                
+                res.setHeader('Content-Type', mimeTypes[fileExt] || 'image/jpeg');
+                res.setHeader('Cache-Control', 'public, max-age=86400');
+                return res.sendFile(filePath);
+            }
+        }
+        
+        // For videos, serve a video thumbnail placeholder
+        if (isVideo) {
+            logActivity('DEBUG', 'Video file preview requested', filename, requestId);
+            // Return a video icon response
+            res.setHeader('Content-Type', 'application/json');
+            return res.json({
+                type: 'video',
+                message: 'Video preview not supported, use video player',
+                filename: filename,
+                requestId: requestId
+            });
+        }
+        
+        // For unsupported files
+        logActivity('WARN', 'Unsupported file type for preview', filename, requestId);
+        res.status(415).json({ 
+            error: 'File type not supported for preview',
+            code: 'UNSUPPORTED_TYPE',
+            requestId: requestId
+        });
+        
+    } catch (error) {
+        logError(error, 'Preview generation failed', requestId);
+        res.status(500).json({ 
+            error: 'Preview generation failed',
+            code: 'PREVIEW_ERROR',
             requestId: requestId
         });
     }
