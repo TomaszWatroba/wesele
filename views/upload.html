@@ -1,35 +1,829 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wedding Photo Upload</title>
-    <link rel="stylesheet" href="/css/upload.css">
+    <title>Dodaj Zdjęcia i Filmy - Galeria Weselna</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background-attachment: fixed;
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.2rem;
+            color: #d63384;
+            margin-bottom: 20px;
+            font-weight: 300;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+
+        .nav-button {
+            background: white;
+            color: #333;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .nav-button.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .upload-area {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            border: 2px dashed #e0e0e0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area.drag-over {
+            background: rgba(214, 51, 132, 0.05);
+            border-color: #d63384;
+        }
+
+        .upload-area p {
+            margin-bottom: 15px;
+            color: #666;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 20px 0;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .progress-container {
+            background: #f0f0f0;
+            border-radius: 50px;
+            height: 10px;
+            margin: 30px 0;
+            overflow: hidden;
+            display: none;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+
+        .status {
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 500;
+            color: #666;
+            min-height: 24px;
+        }
+
+        .status.success {
+            color: #38b764;
+        }
+
+        .status.error {
+            color: #e14a4a;
+        }
+
+        .preview-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .preview-item {
+            position: relative;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            aspect-ratio: 1;
+        }
+
+        .preview-item img, .preview-item video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .preview-remove {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s ease;
+        }
+
+        .preview-remove:hover {
+            background: rgba(0,0,0,0.7);
+        }
+
+        .preview-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 8px;
+            background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+            color: white;
+            font-size: 0.7rem;
+        }
+
+        .file-type-indicator {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border-radius: 3px;
+            padding: 2px 6px;
+            font-size: 0.7rem;
+        }
+
+        .upload-form-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-top: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #d63384;
+        }
+
+        .form-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .form-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .tips-container {
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-top: 40px;
+        }
+
+        .tips-title {
+            font-size: 1.4rem;
+            color: #d63384;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .tips-list {
+            list-style-type: none;
+        }
+
+        .tips-list li {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .tips-list li::before {
+            content: "💡";
+            flex-shrink: 0;
+        }
+
+        .video-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            pointer-events: none;
+        }
+        
+        /* Debug panel */
+        .debug-panel {
+            background: rgba(0, 0, 0, 0.8);
+            color: #0f0;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 9999;
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px 15px;
+            }
+
+            .upload-area {
+                padding: 30px 15px;
+            }
+
+            .preview-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h1>📸 Share Your Wedding Photos</h1>
+        <h1>📸 Podziel się zdjęciami i filmami z wesela</h1>
         
-        <form id="uploadForm" enctype="multipart/form-data">
-            <div class="upload-area" id="uploadArea">
-                <p>📷 Drag and drop your photos and videos here</p>
-                <p>or</p>
-                <button type="button" class="upload-btn" onclick="document.getElementById('fileInput').click()">
-                    Choose Photos & Videos
-                </button>
-                <input type="file" id="fileInput" name="photos" multiple accept="image/*,video/*,.heic,.heif">
-            </div>
-        </form>
+        <div class="nav-buttons">
+            <a href="/" class="nav-button">
+                <span>←</span>
+                <span>Strona główna</span>
+            </a>
+            <a href="/gallery" class="nav-button primary">
+                <span>🖼️</span>
+                <span>Zobacz galerię</span>
+            </a>
+        </div>
         
-        <div class="progress" id="progressContainer">
+        <div class="upload-area" id="uploadArea">
+            <p>📷 Przeciągnij i upuść swoje zdjęcia i filmy tutaj</p>
+            <p>lub</p>
+            <button type="button" class="upload-btn" id="chooseFilesBtn">
+                Wybierz zdjęcia i filmy
+            </button>
+            <p style="font-size: 0.9rem; color: #999;">
+                Obsługiwane formaty: JPG, PNG, GIF, HEIC, MP4, MOV<br>
+                Maksymalny rozmiar pliku: 20MB
+            </p>
+            <input type="file" id="fileInput" name="files" multiple accept="image/*,video/*,.heic,.heif">
+        </div>
+        
+        <div class="progress-container" id="progressContainer">
             <div class="progress-bar" id="progressBar"></div>
         </div>
         
         <div class="status" id="status"></div>
         
-        <div id="uploadedPhotos"></div>
+        <div class="preview-container" id="previewContainer"></div>
+        
+        <div class="upload-form-container" id="uploadFormContainer">
+            <form id="metadataForm">
+                <div class="form-group">
+                    <label for="contributorName" class="form-label">Twoje imię (lub imiona)</label>
+                    <input type="text" id="contributorName" name="contributorName" class="form-input" required placeholder="np. Ania i Tomek">
+                </div>
+                
+                <div class="form-group">
+                    <label for="message" class="form-label">Wiadomość (opcjonalnie)</label>
+                    <textarea id="message" name="message" class="form-input" rows="3" placeholder="Kilka słów dla Młodej Pary..."></textarea>
+                </div>
+                
+                <button type="submit" class="form-submit" id="submitBtn">
+                    Prześlij do galerii weselnej
+                </button>
+            </form>
+        </div>
+        
+        <div class="tips-container">
+            <h3 class="tips-title">Wskazówki</h3>
+            <ul class="tips-list">
+                <li>Wybieraj zdjęcia i filmy wysokiej jakości - będą wyglądały lepiej w galerii.</li>
+                <li>Możesz przesłać do 20 plików jednocześnie.</li>
+                <li>Zdjęcia i filmy mogą być przeglądane przez wszystkich gości.</li>
+                <li>Jeśli chcesz przesłać dużą liczbę zdjęć, możesz podzielić je na kilka grup.</li>
+                <li>Dodaj swoje imię, aby wszyscy wiedzieli, kto przesłał dane zdjęcia.</li>
+            </ul>
+        </div>
     </div>
+    
+    <!-- Debug panel -->
+    <div class="debug-panel" id="debugPanel"></div>
 
-    <script src="/js/upload.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Debug mode - set to true to enable
+            const DEBUG = true;
+            
+            // Debug functions
+            function debugLog(message) {
+                if (!DEBUG) return;
+                
+                const debugPanel = document.getElementById('debugPanel');
+                debugPanel.style.display = 'block';
+                
+                const logEntry = document.createElement('div');
+                logEntry.textContent = `[${new Date().toISOString()}] ${message}`;
+                debugPanel.appendChild(logEntry);
+                debugPanel.scrollTop = debugPanel.scrollHeight;
+                
+                console.log(message);
+            }
+            
+            // Elements
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            const chooseFilesBtn = document.getElementById('chooseFilesBtn');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const status = document.getElementById('status');
+            const previewContainer = document.getElementById('previewContainer');
+            const uploadFormContainer = document.getElementById('uploadFormContainer');
+            const metadataForm = document.getElementById('metadataForm');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            debugLog('DOM loaded - Starting upload functionality');
+            
+            // Selected files
+            let selectedFiles = [];
+            
+            // Event Listeners
+            chooseFilesBtn.addEventListener('click', () => {
+                debugLog('Choose files button clicked');
+                fileInput.click();
+            });
+            
+            fileInput.addEventListener('change', (e) => {
+                debugLog(`File input change event triggered - ${e.target.files.length} files selected`);
+                handleFileSelect(e);
+            });
+            
+            // Drag and drop functionality
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight() {
+                uploadArea.classList.add('drag-over');
+            }
+            
+            function unhighlight() {
+                uploadArea.classList.remove('drag-over');
+            }
+            
+            uploadArea.addEventListener('drop', (e) => {
+                debugLog('Files dropped');
+                handleDrop(e);
+            });
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleFiles(files);
+            }
+            
+            // Form submission
+            metadataForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                debugLog('Form submitted');
+                uploadFiles();
+            });
+            
+            // Handle file selection
+            function handleFileSelect(e) {
+                const files = e.target.files;
+                if (files.length === 0) {
+                    debugLog('No files selected');
+                    return;
+                }
+                
+                debugLog(`Selected ${files.length} files`);
+                handleFiles(files);
+            }
+            
+            function handleFiles(files) {
+                if (files.length === 0) return;
+                
+                // Validate files and add to selected files
+                Array.from(files).forEach(file => {
+                    // Check file type
+                    const isImage = file.type.startsWith('image/');
+                    const isVideo = file.type.startsWith('video/');
+                    const isHeic = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
+                    
+                    debugLog(`Processing file: ${file.name}, type: ${file.type}, size: ${file.size}`);
+                    
+                    if (!isImage && !isVideo && !isHeic) {
+                        debugLog(`File ${file.name} rejected - unsupported type`);
+                        showStatus(`Plik ${file.name} nie jest obsługiwany. Dozwolone są tylko zdjęcia i filmy.`, 'error');
+                        return;
+                    }
+                    
+                    // Check file size (20MB max)
+                    if (file.size > 20 * 1024 * 1024) {
+                        debugLog(`File ${file.name} rejected - too large (${file.size} bytes)`);
+                        showStatus(`Plik ${file.name} jest za duży. Maksymalny rozmiar to 20MB.`, 'error');
+                        return;
+                    }
+                    
+                    // Add file to selected files
+                    selectedFiles.push({
+                        file: file,
+                        id: Date.now() + Math.random().toString(36).substr(2, 9),
+                        type: isVideo ? 'video' : 'image'
+                    });
+                    
+                    debugLog(`File ${file.name} added as ${isVideo ? 'video' : 'image'}`);
+                });
+                
+                // Reset file input
+                fileInput.value = '';
+                
+                // Show previews
+                renderPreviews();
+                
+                // Show upload form if files are selected
+                if (selectedFiles.length > 0) {
+                    uploadFormContainer.style.display = 'block';
+                } else {
+                    uploadFormContainer.style.display = 'none';
+                }
+            }
+            
+            // Render file previews
+            function renderPreviews() {
+                previewContainer.innerHTML = '';
+                
+                debugLog(`Rendering ${selectedFiles.length} previews`);
+                
+                selectedFiles.forEach(fileObj => {
+                    const preview = document.createElement('div');
+                    preview.className = 'preview-item';
+                    preview.dataset.id = fileObj.id;
+                    
+                    // Create file type indicator
+                    const fileTypeIndicator = document.createElement('div');
+                    fileTypeIndicator.className = 'file-type-indicator';
+                    fileTypeIndicator.textContent = fileObj.type === 'video' ? 'Video' : 'Photo';
+                    
+                    // Create remove button
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'preview-remove';
+                    removeBtn.innerHTML = '&times;';
+                    removeBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        removeFile(fileObj.id);
+                    });
+                    
+                    // Create file info
+                    const fileInfo = document.createElement('div');
+                    fileInfo.className = 'preview-info';
+                    fileInfo.textContent = formatFileSize(fileObj.file.size);
+                    
+                    // Add file preview
+                    if (fileObj.type === 'image') {
+                        const img = document.createElement('img');
+                        
+                        // Handle HEIC files differently
+                        if (fileObj.file.name.toLowerCase().endsWith('.heic') || fileObj.file.name.toLowerCase().endsWith('.heif')) {
+                            img.src = '/img/heic-placeholder.jpg'; // A placeholder image for HEIC files
+                            debugLog(`Using placeholder for HEIC file: ${fileObj.file.name}`);
+                        } else {
+                            const reader = new FileReader();
+                            reader.onload = (e) => {
+                                img.src = e.target.result;
+                                debugLog(`Image preview created for ${fileObj.file.name}`);
+                            };
+                            reader.onerror = (e) => {
+                                debugLog(`Error creating preview for ${fileObj.file.name}: ${e}`);
+                            };
+                            reader.readAsDataURL(fileObj.file);
+                        }
+                        
+                        preview.appendChild(img);
+                    } else if (fileObj.type === 'video') {
+                        // For videos, create a thumbnail
+                        const video = document.createElement('video');
+                        video.preload = 'metadata';
+                        
+                        video.onloadedmetadata = function() {
+                            // Jump to a point in the video to generate thumbnail
+                            debugLog(`Video metadata loaded for ${fileObj.file.name}`);
+                            video.currentTime = 1.0;
+                        };
+                        
+                        video.onseeked = function() {
+                            debugLog(`Video seeked for thumbnail: ${fileObj.file.name}`);
+                            // Create a canvas and draw the video frame
+                            const canvas = document.createElement('canvas');
+                            canvas.width = video.videoWidth;
+                            canvas.height = video.videoHeight;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                            
+                            // Create an image from the canvas
+                            const img = document.createElement('img');
+                            img.src = canvas.toDataURL();
+                            
+                            // Replace video with the thumbnail
+                            preview.querySelector('video').remove();
+                            preview.appendChild(img);
+                            
+                            // Add video indicator
+                            const videoIndicator = document.createElement('div');
+                            videoIndicator.className = 'video-indicator';
+                            videoIndicator.textContent = '▶️';
+                            preview.appendChild(videoIndicator);
+                        };
+                        
+                        video.onerror = function() {
+                            debugLog(`Error loading video for thumbnail: ${fileObj.file.name}`);
+                        };
+                        
+                        // Set the video source
+                        try {
+                            const objectURL = URL.createObjectURL(fileObj.file);
+                            video.src = objectURL;
+                            debugLog(`Video source set: ${fileObj.file.name}`);
+                        } catch (e) {
+                            debugLog(`Error creating object URL for video: ${e}`);
+                        }
+                        
+                        preview.appendChild(video);
+                    }
+                    
+                    // Add elements to preview
+                    preview.appendChild(fileTypeIndicator);
+                    preview.appendChild(removeBtn);
+                    preview.appendChild(fileInfo);
+                    
+                    // Add preview to container
+                    previewContainer.appendChild(preview);
+                });
+                
+                // Update status
+                if (selectedFiles.length > 0) {
+                    showStatus(`Wybrano ${selectedFiles.length} ${getFileCountText(selectedFiles.length)}`, 'success');
+                } else {
+                    showStatus('');
+                }
+            }
+            
+            // Helper function for file count text
+            function getFileCountText(count) {
+                if (count === 1) {
+                    return 'plik';
+                } else if (count >= 2 && count <= 4) {
+                    return 'pliki';
+                } else {
+                    return 'plików';
+                }
+            }
+            
+            // Remove file from selection
+            function removeFile(id) {
+                debugLog(`Removing file with id: ${id}`);
+                selectedFiles = selectedFiles.filter(fileObj => fileObj.id !== id);
+                renderPreviews();
+                
+                // Hide form if no files selected
+                if (selectedFiles.length === 0) {
+                    uploadFormContainer.style.display = 'none';
+                }
+            }
+            
+            // Format file size
+            function formatFileSize(bytes) {
+                if (bytes < 1024) {
+                    return bytes + ' B';
+                } else if (bytes < 1024 * 1024) {
+                    return (bytes / 1024).toFixed(1) + ' KB';
+                } else {
+                    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+                }
+            }
+            
+            // Show status message
+            function showStatus(message, type = '') {
+                status.textContent = message;
+                status.className = 'status';
+                
+                if (type) {
+                    status.classList.add(type);
+                }
+                
+                debugLog(`Status updated: ${message} (${type})`);
+            }
+            
+            // Upload files
+            function uploadFiles() {
+                if (selectedFiles.length === 0) {
+                    showStatus('Nie wybrano żadnych plików', 'error');
+                    return;
+                }
+                
+                debugLog(`Starting upload of ${selectedFiles.length} files`);
+                
+                // Disable submit button
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Przesyłanie...';
+                
+                // Show progress bar
+                progressContainer.style.display = 'block';
+                progressBar.style.width = '0%';
+                
+                // Get form data
+                const contributorName = document.getElementById('contributorName').value;
+                const message = document.getElementById('message').value;
+                
+                debugLog(`Contributor: ${contributorName}, Message length: ${message.length}`);
+                
+                // Create FormData
+                const formData = new FormData();
+                formData.append('contributorName', contributorName);
+                formData.append('message', message);
+                
+                // Add files to FormData
+                selectedFiles.forEach(fileObj => {
+                    formData.append('files', fileObj.file);
+                    formData.append('fileTypes', fileObj.type);
+                    debugLog(`Added to form: ${fileObj.file.name} (${fileObj.type})`);
+                });
+                
+                // Upload files
+                debugLog('Sending upload request to /api/upload');
+                fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    debugLog(`Server response status: ${response.status}`);
+                    if (!response.ok) {
+                        throw new Error(`Wystąpił błąd podczas przesyłania plików (${response.status})`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    debugLog(`Upload successful: ${JSON.stringify(data)}`);
+                    
+                    // Show success message
+                    showStatus('Pliki zostały pomyślnie przesłane!', 'success');
+                    
+                    // Reset form
+                    selectedFiles = [];
+                    metadataForm.reset();
+                    renderPreviews();
+                    uploadFormContainer.style.display = 'none';
+                    
+                    // Hide progress bar after a delay
+                    setTimeout(() => {
+                        progressContainer.style.display = 'none';
+                    }, 2000);
+                    
+                    // Enable submit button
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Prześlij do galerii weselnej';
+                    
+                    // Redirect to gallery after 2 seconds
+                    setTimeout(() => {
+                        window.location.href = '/gallery';
+                    }, 2000);
+                })
+                .catch(error => {
+                    // Show error message
+                    debugLog(`Upload error: ${error.message}`);
+                    showStatus(error.message, 'error');
+                    
+                    // Enable submit button
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Prześlij do galerii weselnej';
+                    
+                    // Hide progress bar
+                    progressContainer.style.display = 'none';
+                })
+                .finally(() => {
+                    // Update progress for demo
+                    simulateProgress();
+                });
+            }
+            
+            // Simulate upload progress for demonstration
+            function simulateProgress() {
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 5;
+                    progressBar.style.width = `${progress}%`;
+                    
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                    }
+                }, 100);
+            }
+            
+            debugLog('Upload functionality initialized');
+        });
+    </script>
 </body>
 </html>

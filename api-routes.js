@@ -16,11 +16,14 @@ const { uploadLimiter, upload, debugUpload } = require('./middleware');
 const router = express.Router();
 
 
+
+// Function to detect tunnel and custom domain
 const detectTunnel = (req) => {
     console.log('🔍 FULL DEBUG - All Request Headers:');
     console.log(JSON.stringify(req.headers, null, 2));
     
     const hostHeader = req.headers.host || '';
+    const customDomain = config.CUSTOM_DOMAIN;
     
     // Multiple detection methods
     const detectionMethods = {
@@ -29,38 +32,75 @@ const detectTunnel = (req) => {
         isHTTPS: req.headers['x-forwarded-proto'] === 'https' || req.secure || req.connection?.encrypted,
         hasCloudflareRay: !!req.headers['cf-ray'],
         hasCloudflareIP: !!req.headers['cf-connecting-ip'],
+        isCustomDomain: hostHeader.includes(customDomain),
         isTunnelDomain: hostHeader.includes('gosiaitomek.redirectme.net'),
-        isQuickTunnel: hostHeader.includes('trycloudflare.com'), // Detect quick tunnels
-        hasForwardedFor: !!req.headers['x-forwarded-for']
+        isQuickTunnel: hostHeader.includes('trycloudflare.com'),
+        hasForwardedFor: !!req.headers['x-forwarded-for'],
+        forceTunnel: process.env.FORCE_TUNNEL === 'true'
     };
     
     console.log('🔍 Detection Methods Results:', detectionMethods);
     
     // Determine if tunnel is active
     const tunnelActive = 
+        detectionMethods.forceTunnel ||
+        detectionMethods.isCustomDomain ||
         detectionMethods.hasCloudflareHeaders ||
         detectionMethods.hasCloudflareRay ||
         detectionMethods.hasCloudflareIP ||
-        detectionMethods.isQuickTunnel || // Add quick tunnel detection
+        detectionMethods.isQuickTunnel ||
         (detectionMethods.isTunnelDomain && detectionMethods.isHTTPS) ||
         (detectionMethods.isTunnelDomain && detectionMethods.hasXForwardedProto);
     
     console.log('🔍 FINAL TUNNEL DECISION:', {
         tunnelActive,
-        reasoning: tunnelActive ? 'Found tunnel indicators' : 'No tunnel indicators found'
+        customDomain: customDomain,
+        reasoning: tunnelActive ? 'Found tunnel indicators or custom domain' : 'No tunnel indicators found'
     });
     
     return {
         tunnelActive,
         isLocal: !tunnelActive,
         isTunnel: tunnelActive,
+        customDomain: customDomain,
         debug: {
             detectionMethods,
             hostHeader
         }
     };
 };
-module.exports = { detectTunnel };
+
+// Function to get the best URL for QR codes and public access
+const getBestPublicURL = (req, path = '') => {
+    const tunnelInfo = detectTunnel(req);
+    const customDomain = config.CUSTOM_DOMAIN;
+    
+    let baseURL;
+    
+    if (tunnelInfo.tunnelActive) {
+        // If we have a custom domain, use it
+        baseURL = `https://${customDomain}`;
+    } else {
+        // No tunnel - use localhost
+        baseURL = `http://localhost:${config.PORT}`;
+    }
+    
+    // Add path if provided
+    if (path) {
+        // Make sure path starts with a slash
+        if (!path.startsWith('/')) {
+            path = '/' + path;
+        }
+        return baseURL + path;
+    }
+    
+    return baseURL;
+};
+
+module.exports = {
+    detectTunnel,
+    getBestPublicURL
+};
 
 // 📤 Enhanced file upload endpoint with detailed logging
 router.post('/upload', (req, res, next) => {
@@ -165,6 +205,7 @@ router.get('/files', (req, res) => {
 });
 
 // 🎯 Enhanced QR code generation endpoint with dynamic URL detection
+// Fixed QR code generation endpoint - Points to MAIN PAGE instead of /upload
 router.get('/qr', async (req, res) => {
     const requestId = req.requestId;
     const qrPerf = performanceLogger('generateQR');
@@ -176,13 +217,13 @@ router.get('/qr', async (req, res) => {
         xForwardedHost: req.get('X-Forwarded-Host')
     });
     
-    // Smart URL detection - ALWAYS point to /upload
+    // Smart URL detection - Point to MAIN PAGE
     let baseURL;
     
     if (req.query.url) {
-        // Use provided URL but ensure it ends with /upload
-        baseURL = req.query.url.replace('/upload', ''); // Remove if exists
-        console.log('📝 Using provided base URL:', baseURL);
+        // Use provided URL and remove any path
+        baseURL = req.query.url.replace('/upload', '').replace('/photos', '');
+        console.log('🔍 Using provided base URL:', baseURL);
     } else {
         // Auto-detect best URL
         const host = req.get('Host');
@@ -190,34 +231,37 @@ router.get('/qr', async (req, res) => {
         if (host && host.includes('trycloudflare.com')) {
             baseURL = `https://${host}`;
             console.log('🌐 Detected tunnel URL:', baseURL);
+        } else if (host && host.includes('gosiaitomek.pl')) {
+            baseURL = `https://${host}`;
+            console.log('🌐 Detected custom domain:', baseURL);
         } else {
             baseURL = `http://localhost:${config.PORT}`;
             console.log('🏠 Using localhost URL:', baseURL);
         }
     }
     
-    // ALWAYS point to the upload page for guests
-    const uploadURL = `${baseURL}/upload`;
-    console.log('✅ Final QR URL (UPLOAD PAGE):', uploadURL);
+    // Point to MAIN PAGE (root) instead of /upload
+    const mainPageURL = baseURL; // Just the base URL, no /upload
+    console.log('✅ Final QR URL (MAIN PAGE):', mainPageURL);
     
     logActivity('DEBUG', 'QR code generation requested', '', requestId, {
         detectedBaseURL: baseURL,
-        finalUploadURL: uploadURL,
+        finalMainPageURL: mainPageURL,
         providedURL: req.query.url
     });
     
     try {
-        const qrDataUrl = await QRCode.toDataURL(uploadURL, config.QR_OPTIONS);
+        const qrDataUrl = await QRCode.toDataURL(mainPageURL, config.QR_OPTIONS);
         
-        qrPerf.end(`for URL: ${uploadURL}`);
+        qrPerf.end(`for URL: ${mainPageURL}`);
         
         logActivity('SUCCESS', 'QR code generated', '', requestId, {
-            url: uploadURL,
+            url: mainPageURL,
             dataUrlLength: qrDataUrl.length,
             format: 'PNG data URL'
         });
         
-        console.log('✅ QR code generated successfully for UPLOAD page');
+        console.log('✅ QR code generated successfully for MAIN PAGE');
         res.send(qrDataUrl);
         
     } catch (error) {
@@ -231,7 +275,7 @@ router.get('/qr', async (req, res) => {
     }
 });
 
-// 📱 QR code download endpoint for printing
+// Fixed QR code download endpoint for printing - Points to MAIN PAGE
 router.get('/qr-download', async (req, res) => {
     const requestId = req.requestId;
     
@@ -243,61 +287,22 @@ router.get('/qr-download', async (req, res) => {
         const host = req.get('Host');
         
         if (req.query.url) {
-            baseURL = req.query.url;
+            baseURL = req.query.url.replace('/upload', '').replace('/photos', '');
         } else if (host && host.includes('trycloudflare.com')) {
+            baseURL = `https://${host}`;
+        } else if (host && host.includes('gosiaitomek.pl')) {
             baseURL = `https://${host}`;
         } else {
             baseURL = `http://localhost:${config.PORT}`;
         }
         
-        const uploadURL = `${baseURL}/upload`;
+        // Point to MAIN PAGE instead of /upload
+        const mainPageURL = baseURL;
         
-        // Generate QR code as PNG buffer
-        const qrPngBuffer = await QRCode.toBuffer(uploadURL, {
-            ...config.QR_OPTIONS,
-            type: 'png',
-            width: 800, // Higher resolution for printing
-            margin: 4
-        });
-        
-        // Set headers for file download
-        const filename = `qr-code-${config.EVENT_NAME.replace(/\s+/g, '-')}.png`;
-        res.setHeader('Content-Type', 'image/png');
-        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-        res.setHeader('Content-Length', qrPngBuffer.length);
-        
-        logActivity('SUCCESS', 'QR code downloaded', '', requestId, {
-            url: uploadURL,
-            filename: filename,
-            size: `${Math.round(qrPngBuffer.length / 1024)}KB`
-        });
-        
-        console.log('✅ QR PNG generated for download');
-        res.send(qrPngBuffer);
-        
-    } catch (error) {
-        console.error('❌ QR download error:', error);
-        logError(error, 'QR code download failed', requestId);
-        res.status(500).json({ 
-            error: 'Błąd pobierania QR kodu',
-            code: 'QR_DOWNLOAD_ERROR',
-            requestId: requestId
-        });
-    }
-});
-
-// 📱 Enhanced QR code generation for admin panel
-router.get('/qr-upload', async (req, res) => {
-    const requestId = req.requestId;
-    const qrPerf = performanceLogger('generateQRUpload');
-    
-    console.log('📱 QR Upload generation requested');
-    
-    try {
-        // Use the same tunnel detection logic as public-url endpoint
+        // Use improved tunnel detection
         const tunnelInfo = detectTunnel(req);
         
-        // 🔧 FORCE tunnel detection for permanent URL
+        // Force tunnel detection if needed
         const forceTunnel = req.query.force === 'tunnel' || 
                            req.headers.host?.includes('gosiaitomek.redirectme.net') ||
                            process.env.FORCE_TUNNEL === 'true';
@@ -307,50 +312,49 @@ router.get('/qr-upload', async (req, res) => {
             tunnelInfo.tunnelActive = true;
         }
         
-        // ALWAYS use your permanent domain when tunnel is active (forced or real)
-        let uploadURL;
+        // Determine final URL
+        let finalURL;
         
         if (tunnelInfo.tunnelActive) {
-            uploadURL = 'https://gosiaitomek.redirectme.net/upload';
-            console.log('🌐 Using PERMANENT tunnel URL for QR:', uploadURL);
+            finalURL = 'https://gosiaitomek.pl'; // Main page of your domain
+            console.log('🌐 Using PERMANENT domain URL for QR:', finalURL);
         } else {
-            uploadURL = `http://localhost:${config.PORT}/upload`;
-            console.log('🏠 Using localhost URL for QR:', uploadURL);
+            finalURL = `http://localhost:${config.PORT}`; // Main page localhost
+            console.log('🏠 Using localhost URL for QR:', finalURL);
         }
         
         // Generate QR code as data URL
-        const qrDataUrl = await QRCode.toDataURL(uploadURL, {
+        const qrDataUrl = await QRCode.toDataURL(finalURL, {
             ...config.QR_OPTIONS,
             width: 256,
             margin: 2,
             errorCorrectionLevel: 'M' // Medium error correction for printing
         });
         
-        qrPerf.end(`for URL: ${uploadURL}`);
-        
         logActivity('SUCCESS', 'QR code generated for admin', '', requestId, {
-            url: uploadURL,
+            url: finalURL,
             isTunnel: tunnelInfo.tunnelActive,
             forceTunnel: forceTunnel,
-            isPermanentDomain: uploadURL.includes('gosiaitomek.redirectme.net'),
+            isPermanentDomain: finalURL.includes('gosiaitomek.pl'),
             qrSize: qrDataUrl.length
         });
         
         res.json({
             success: true,
             qrCode: qrDataUrl,
-            uploadUrl: uploadURL,
+            url: finalURL, // Changed from uploadUrl to url
             message: tunnelInfo.tunnelActive ? 
-                'QR code generated with PERMANENT tunnel URL - Ready for printing!' : 
-                'QR code generated with localhost URL',
+                'QR code generated with PERMANENT domain URL - Points to main page!' : 
+                `QR code generated with localhost URL: ${finalURL} - Points to main page!`,
             isTunnel: tunnelInfo.tunnelActive,
-            isPermanentUrl: uploadURL.includes('gosiaitomek.redirectme.net'),
+            customDomain: config.CUSTOM_DOMAIN,
+            isPermanentUrl: finalURL.includes('gosiaitomek.pl'),
             requestId: requestId
         });
         
     } catch (error) {
         console.error('❌ QR generation error:', error);
-        logError(error, 'QR upload generation failed', requestId);
+        logError(error, 'QR main page generation failed', requestId);
         res.status(500).json({ 
             success: false,
             error: 'Failed to generate QR code',
@@ -360,155 +364,7 @@ router.get('/qr-upload', async (req, res) => {
     }
 });
 
-
-// Helper function to detect tunnel status (add this near the top of your file)
-function detectTunnelStatus(req) {
-    const host = req.get('host') || '';
-    const weddingDomain = req.weddingDomain || '';
-    const forceTunnel = req.forceTunnel || false;
-    
-    // Force tunnel mode via environment variable
-    if (forceTunnel) {
-        return {
-            tunnelActive: true,
-            detectionMethod: 'environment_variable'
-        };
-    }
-    
-    // Force tunnel mode via query parameter
-    if (req.query.force === 'tunnel') {
-        return {
-            tunnelActive: true,
-            detectionMethod: 'query_parameter'
-        };
-    }
-    
-    // Check if host matches DuckDNS domain
-    if (host.includes('.duckdns.org')) {
-        return {
-            tunnelActive: true,
-            detectionMethod: 'duckdns_domain'
-        };
-    }
-    
-    // Check if using custom wedding domain
-    if (weddingDomain && weddingDomain !== 'localhost:3000' && host.includes(weddingDomain.split(':')[0])) {
-        return {
-            tunnelActive: true,
-            detectionMethod: 'custom_domain'
-        };
-    }
-    
-    // Default to local
-    return {
-        tunnelActive: false,
-        detectionMethod: 'localhost_detected'
-    };
-}
-
-// Update your /public-url endpoint (replace existing one):
-router.get('/public-url', (req, res) => {
-    const requestId = req.requestId || 'no-id';
-    const host = req.get('host') || 'localhost:3000';
-    const protocol = req.secure || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
-    
-    const tunnelStatus = detectTunnelStatus(req);
-    
-    let uploadURL;
-    if (tunnelStatus.tunnelActive) {
-        // Use the wedding domain (DuckDNS or custom)
-        const domain = req.weddingDomain || host;
-        uploadURL = `https://${domain}/upload`;
-    } else {
-        // Local development
-        uploadURL = `${protocol}://${host}/upload`;
-    }
-    
-    logActivity('INFO', 'Public URL requested', '', requestId, {
-        host: host,
-        uploadURL: uploadURL,
-        tunnelActive: tunnelStatus.tunnelActive,
-        detectionMethod: tunnelStatus.detectionMethod,
-        weddingDomain: req.weddingDomain
-    });
-    
-    res.json({
-        uploadURL: uploadURL,
-        tunnelActive: tunnelStatus.tunnelActive,
-        detectionMethod: tunnelStatus.detectionMethod,
-        host: host,
-        weddingDomain: req.weddingDomain,
-        forceTunnel: req.forceTunnel,
-        timestamp: new Date().toISOString()
-    });
-});
-
-// Update your /qr-upload endpoint (replace existing one):
-router.get('/qr-upload', async (req, res) => {
-    const requestId = req.requestId || 'no-id';
-    
-    try {
-        logActivity('INFO', 'QR code generation started', '', requestId);
-        
-        const host = req.get('host') || 'localhost:3000';
-        const protocol = req.secure || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
-        
-        const tunnelStatus = detectTunnelStatus(req);
-        
-        let uploadURL;
-        if (tunnelStatus.tunnelActive) {
-            // Use the wedding domain (DuckDNS or custom)
-            const domain = req.weddingDomain || host;
-            uploadURL = `https://${domain}/upload`;
-        } else {
-            // Local development
-            uploadURL = `${protocol}://${host}/upload`;
-        }
-        
-        // Generate QR code
-        const QRCode = require('qrcode');
-        const qrCodeDataURL = await QRCode.toDataURL(uploadURL, {
-            errorCorrectionLevel: 'M',
-            type: 'image/png',
-            quality: 0.92,
-            margin: 1,
-            color: {
-                dark: '#000000',
-                light: '#FFFFFF'
-            },
-            width: 512
-        });
-        
-        logActivity('SUCCESS', 'QR code generated', uploadURL, requestId, {
-            tunnelActive: tunnelStatus.tunnelActive,
-            detectionMethod: tunnelStatus.detectionMethod,
-            weddingDomain: req.weddingDomain,
-            qrDataLength: qrCodeDataURL.length
-        });
-        
-        res.json({
-            success: true,
-            qrCode: qrCodeDataURL,
-            uploadUrl: uploadURL,
-            tunnelActive: tunnelStatus.tunnelActive,
-            detectionMethod: tunnelStatus.detectionMethod,
-            weddingDomain: req.weddingDomain,
-            message: tunnelStatus.tunnelActive ? 
-                `QR code generated with DuckDNS URL: ${uploadURL}` : 
-                `QR code generated with local URL: ${uploadURL}`
-        });
-        
-    } catch (error) {
-        logError(error, 'QR code generation failed', requestId);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to generate QR code',
-            details: error.message
-        });
-    }
-});
-
-// 🌐 Endpoint to get current public URL info
+// Update the public-url endpoint to also reflect main page
 router.get('/public-url', (req, res) => {
     const requestId = req.requestId || 'no-id';
     
@@ -518,8 +374,7 @@ router.get('/public-url', (req, res) => {
     // Use improved tunnel detection
     const tunnelInfo = detectTunnel(req);
     
-    // 🔧 TEMPORARY FIX: Force tunnel detection
-    // Remove this once DNS is working
+    // Force tunnel detection
     const forceTunnel = req.query.force === 'tunnel' || 
                        req.headers.host?.includes('gosiaitomek.redirectme.net') ||
                        process.env.FORCE_TUNNEL === 'true';
@@ -532,21 +387,22 @@ router.get('/public-url', (req, res) => {
     }
     
     // Determine the base URL
-    let baseURL, uploadURL;
+    let baseURL, mainPageURL;
     
     if (tunnelInfo.tunnelActive) {
         // Tunnel is active - use the public domain
-        baseURL = 'https://gosiaitomek.redirectme.net';
-        uploadURL = 'https://gosiaitomek.redirectme.net/upload';
+        baseURL = 'https://gosiaitomek.pl';
+        mainPageURL = 'https://gosiaitomek.pl'; // Main page
     } else {
         // No tunnel - use localhost
         baseURL = 'http://localhost:3000';
-        uploadURL = 'http://localhost:3000/upload';
+        mainPageURL = 'http://localhost:3000'; // Main page localhost
     }
     
     const urlInfo = {
         baseURL,
-        uploadURL,
+        mainPageURL,      // Changed from uploadURL
+        uploadURL: `${baseURL}/upload`, // Keep this for reference if needed
         isLocal: !tunnelInfo.tunnelActive,
         isTunnel: tunnelInfo.tunnelActive,
         tunnelActive: tunnelInfo.tunnelActive,

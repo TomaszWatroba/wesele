@@ -30,42 +30,114 @@ const uploadLimiter = rateLimit({
 // 🛡️ Enhanced security middleware with detailed logging
 const securityMiddleware = (req, res, next) => {
     const requestId = req.requestId || 'no-id';
+    const clientIP = req.get('X-Forwarded-For') || req.ip || 'unknown';
     
-    // Log incoming requests
+    // Log incoming requests with more detail
     logActivity('DEBUG', 'Security check', `${req.method} ${req.path}`, requestId, {
         userAgent: req.get('User-Agent'),
         origin: req.get('Origin'),
         referer: req.get('Referer'),
-        xForwardedFor: req.get('X-Forwarded-For')
+        xForwardedFor: req.get('X-Forwarded-For'),
+        realIP: clientIP
     });
+    
+    // LEGITIMATE ROUTES - Allow these paths to pass through
+    const legitimateRoutes = [
+        '/admin',           // Your admin panel
+        '/admin/',          // Your admin panel with trailing slash
+        '/admin/login',     // Admin login page
+        '/admin/logout',    // Admin logout
+        '/api/',            // Your API routes
+        '/upload',          // Upload page for guests
+        '/photos',          // Photos page
+        '/menu',            // Menu page
+        '/drinks',          // Drinks page
+        '/seating',         // Seating page
+        '/story',           // Story page
+        '/health',          // Health check
+        '/qr',              // QR generation
+        '/gallery'          // Gallery page
+    ];
+    
+    // Check if this is a legitimate route
+    const isLegitimateRoute = legitimateRoutes.some(route => 
+        req.path === route || req.path.startsWith(route)
+    );
+    
+    if (isLegitimateRoute) {
+        logActivity('DEBUG', 'Legitimate route access', `Allowing access to ${req.path}`, requestId);
+        // Add security headers and continue
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+        res.setHeader('X-Frame-Options', 'DENY');
+        res.setHeader('X-XSS-Protection', '1; mode=block');
+        res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+        res.setHeader('Server', 'Wedding-Website');
+        
+        logActivity('DEBUG', 'Security check passed', '', requestId);
+        return next();
+    }
+    
+    // ATTACK PATTERN DETECTION - Only for non-legitimate routes
+    const attackPatterns = [
+        // WordPress scanning
+        /wp-/i,
+        /wordpress/i,
+        /wp-admin/i,
+        /wp-content/i,
+        /wp-includes/i,
+        
+        // Common attack paths (but exclude our legitimate /admin)
+        /\.php/i,
+        /\.asp/i,
+        /\.jsp/i,
+        /phpmyadmin/i,
+        /xmlrpc\.php/i,
+        
+        // Suspicious attack tools
+        /golden-access/i,
+        /shell/i,
+        /backdoor/i,
+        /exploit/i,
+        
+        // Directory traversal
+        /\.\./,
+        /\/\./,
+        
+        // Script injection
+        /\<script\>/i,
+        /javascript:/i,
+        /vbscript:/i,
+        /onload=/i,
+        /onerror=/i,
+        
+        // Common scanner patterns
+        /\.env/i,
+        /config\.php/i,
+        /database/i,
+        /backup/i,
+        /\.git/i,
+        /\.svn/i
+    ];
+    
+    const isAttackPattern = attackPatterns.some(pattern => 
+        pattern.test(req.url) || pattern.test(req.path)
+    );
+    
+    if (isAttackPattern) {
+        logSecurityEvent('Attack pattern detected', 
+            `Blocked suspicious request from ${clientIP}: ${req.method} ${req.url}`, 
+            requestId, 'WARN');
+        
+        // Return 404 instead of revealing we blocked it
+        return res.status(404).send('Not Found');
+    }
     
     // Block dangerous HTTP methods
     const allowedMethods = ['GET', 'POST', 'OPTIONS'];
     if (!allowedMethods.includes(req.method)) {
         logSecurityEvent('Blocked HTTP method', 
-            `Blocked ${req.method} request to ${req.path}`, requestId, 'ERROR');
-        return res.status(405).json({ error: 'Metoda nie dozwolona' });
-    }
-    
-    // Check for suspicious patterns in URL
-    const suspiciousPatterns = [
-        /\.\./,           // Directory traversal
-        /\/\./,           // Hidden files
-        /\<script\>/i,    // XSS attempts
-        /javascript:/i,   // JavaScript injection
-        /vbscript:/i,     // VBScript injection
-        /onload=/i,       // Event handler injection
-        /onerror=/i       // Error handler injection
-    ];
-    
-    const hasSuspiciousPattern = suspiciousPatterns.some(pattern => 
-        pattern.test(req.url) || pattern.test(req.path)
-    );
-    
-    if (hasSuspiciousPattern) {
-        logSecurityEvent('Suspicious URL pattern detected', 
-            `URL: ${req.url}`, requestId, 'ERROR');
-        return res.status(400).json({ error: 'Nieprawidłowe żądanie' });
+            `Blocked ${req.method} from ${clientIP} to ${req.path}`, requestId, 'ERROR');
+        return res.status(405).json({ error: 'Method not allowed' });
     }
     
     // Add security headers
@@ -73,8 +145,9 @@ const securityMiddleware = (req, res, next) => {
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('X-XSS-Protection', '1; mode=block');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Server', 'Wedding-Website');
     
-    // CORS handling with logging
+    // CORS handling
     if (req.get('Origin')) {
         logActivity('DEBUG', 'CORS request', `Origin: ${req.get('Origin')}`, requestId);
         res.setHeader('Access-Control-Allow-Origin', '*');

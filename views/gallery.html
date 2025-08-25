@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{PAGE_TITLE}}</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background-attachment: fixed;
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding-bottom: 30px;
+        }
+
+        .gallery-header {
+            text-align: center;
+            padding: 50px 20px 30px;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.8), rgba(255,255,255,0));
+        }
+
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: #333;
+            font-size: 1.4rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+        }
+
+        .gallery-title {
+            font-size: 2.5rem;
+            color: #d63384;
+            margin-bottom: 15px;
+            font-weight: 300;
+        }
+
+        .gallery-subtitle {
+            font-size: 1.1rem;
+            color: #666;
+            max-width: 600px;
+            margin: 0 auto 20px;
+            line-height: 1.6;
+        }
+
+        .upload-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+        }
+
+        .upload-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .gallery-controls {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 0 20px;
+        }
+
+        .search-container {
+            position: relative;
+            margin-right: 15px;
+        }
+
+        .search-input {
+            padding: 10px 15px;
+            padding-left: 40px;
+            border: 2px solid #e0e0e0;
+            border-radius: 20px;
+            font-size: 1rem;
+            min-width: 250px;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #d63384;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+
+        .filter-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-select {
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 20px;
+            background: white;
+            font-size: 1rem;
+            min-width: 120px;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: #d63384;
+        }
+
+        .gallery-stats {
+            text-align: center;
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 0 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .gallery-item {
+            position: relative;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            aspect-ratio: 1;
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        }
+
+        .gallery-image, .gallery-video-thumbnail {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .gallery-item:hover .gallery-image,
+        .gallery-item:hover .gallery-video-thumbnail {
+            transform: scale(1.05);
+        }
+
+        .gallery-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 15px;
+            background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+            color: white;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .gallery-item:hover .gallery-info {
+            opacity: 1;
+        }
+
+        .gallery-contributor {
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .gallery-date {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        .video-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+
+        .gallery-placeholder {
+            text-align: center;
+            padding: 100px 20px;
+            color: #666;
+        }
+
+        .gallery-placeholder h3 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: #d63384;
+        }
+
+        .gallery-placeholder p {
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto 20px;
+        }
+
+        /* Lightbox */
+        .lightbox {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            z-index: 1000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .lightbox.active {
+            display: flex;
+        }
+
+        .lightbox-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 80vh;
+            text-align: center;
+        }
+
+        .lightbox img, .lightbox video {
+            max-width: 100%;
+            max-height: 80vh;
+            border-radius: 5px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.5);
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .lightbox-close:hover {
+            background: rgba(255,255,255,0.4);
+        }
+
+        .lightbox-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .lightbox-nav:hover {
+            background: rgba(255,255,255,0.4);
+        }
+
+        .lightbox-prev {
+            left: 20px;
+        }
+
+        .lightbox-next {
+            right: 20px;
+        }
+
+        .lightbox-caption {
+            color: white;
+            padding: 15px;
+            max-width: 600px;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        /* Debug panel */
+        .debug-panel {
+            background: rgba(0, 0, 0, 0.8);
+            color: #0f0;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 9999;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .gallery-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .search-container {
+                margin-right: 0;
+                margin-bottom: 15px;
+                width: 100%;
+            }
+
+            .search-input {
+                width: 100%;
+            }
+
+            .filter-container {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .gallery-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="gallery-header">
+        <a href="/" class="back-button">←</a>
+        <h1 class="gallery-title">Galeria Weselna</h1>
+        <p class="gallery-subtitle">
+            Wspólnie tworzymy album wspomnień! Zobacz najpiękniejsze chwile z naszego wesela przesłane przez gości.
+        </p>
+        <a href="/photos" class="upload-button">📸 Dodaj swoje zdjęcia i filmy</a>
+    </div>
+
+    <div class="gallery-controls">
+        <div class="search-container">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" placeholder="Szukaj..." id="searchInput">
+        </div>
+        <div class="filter-container">
+            <select class="filter-select" id="typeFilter">
+                <option value="all">Wszystkie</option>
+                <option value="photo">Tylko zdjęcia</option>
+                <option value="video">Tylko filmy</option>
+            </select>
+            <select class="filter-select" id="sortFilter">
+                <option value="newest">Najnowsze</option>
+                <option value="oldest">Najstarsze</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="gallery-stats" id="galleryStats">
+        Wyświetlanie 0 elementów (0 zdjęć, 0 filmów)
+    </div>
+
+    <div class="gallery-grid" id="galleryGrid">
+        <!-- Gallery items will be loaded dynamically -->
+    </div>
+
+    <div class="gallery-placeholder" id="galleryPlaceholder">
+        <h3>Brak zdjęć i filmów</h3>
+        <p>Bądź pierwszym, który doda wspomnienia z naszego wesela!</p>
+        <a href="/photos" class="upload-button">📸 Dodaj swoje zdjęcia i filmy</a>
+    </div>
+
+    <!-- Lightbox for viewing images and videos -->
+    <div class="lightbox" id="lightbox">
+        <button class="lightbox-close" id="lightboxClose">×</button>
+        <button class="lightbox-nav lightbox-prev" id="lightboxPrev">←</button>
+        <button class="lightbox-nav lightbox-next" id="lightboxNext">→</button>
+        <div class="lightbox-content" id="lightboxContent">
+            <!-- Content will be inserted here -->
+        </div>
+        <div class="lightbox-caption" id="lightboxCaption"></div>
+    </div>
+    
+    <!-- Debug panel -->
+    <div class="debug-panel" id="debugPanel"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Debug mode - set to true to enable debugging
+            const DEBUG = true;
+            
+            // Debug functions
+            function debugLog(message) {
+                if (!DEBUG) return;
+                
+                const debugPanel = document.getElementById('debugPanel');
+                debugPanel.style.display = 'block';
+                
+                const logEntry = document.createElement('div');
+                logEntry.textContent = `[${new Date().toISOString()}] ${message}`;
+                debugPanel.appendChild(logEntry);
+                debugPanel.scrollTop = debugPanel.scrollHeight;
+                
+                console.log(message);
+            }
+            
+            // Elements
+            const galleryGrid = document.getElementById('galleryGrid');
+            const galleryPlaceholder = document.getElementById('galleryPlaceholder');
+            const galleryStats = document.getElementById('galleryStats');
+            const searchInput = document.getElementById('searchInput');
+            const typeFilter = document.getElementById('typeFilter');
+            const sortFilter = document.getElementById('sortFilter');
+            const lightbox = document.getElementById('lightbox');
+            const lightboxContent = document.getElementById('lightboxContent');
+            const lightboxCaption = document.getElementById('lightboxCaption');
+            const lightboxClose = document.getElementById('lightboxClose');
+            const lightboxPrev = document.getElementById('lightboxPrev');
+            const lightboxNext = document.getElementById('lightboxNext');
+            
+            // Gallery items
+            let galleryItems = [];
+            let currentLightboxIndex = 0;
+            
+            debugLog('DOM loaded - Starting gallery functionality');
+            
+            // Fetch gallery items
+            fetchGalleryItems();
+            
+            function fetchGalleryItems() {
+                debugLog('Fetching gallery items from API');
+                
+                // Show loading state
+                galleryStats.textContent = 'Wczytywanie galerii...';
+                
+                fetch('/api/gallery')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        debugLog(`Fetched ${data.length} gallery items`);
+                        galleryItems = data;
+                        renderGallery();
+                    })
+                    .catch(error => {
+                        debugLog(`Error fetching gallery: ${error.message}`);
+                        galleryStats.textContent = 'Wystąpił błąd podczas wczytywania galerii.';
+                        
+                        // For testing only - mock data
+                        if (DEBUG) {
+                            debugLog('Using mock data for testing');
+                            galleryItems = [
+                                {
+                                    id: 1,
+                                    type: 'photo',
+                                    url: 'https://picsum.photos/500/500?random=1',
+                                    thumbnail: 'https://picsum.photos/500/500?random=1',
+                                    contributor: 'Anna K.',
+                                    date: new Date().toISOString()
+                                },
+                                {
+                                    id: 2,
+                                    type: 'photo',
+                                    url: 'https://picsum.photos/500/500?random=2',
+                                    thumbnail: 'https://picsum.photos/500/500?random=2',
+                                    contributor: 'Marcin W.',
+                                    date: new Date().toISOString()
+                                },
+                                {
+                                    id: 3,
+                                    type: 'video',
+                                    url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+                                    thumbnail: 'https://picsum.photos/500/500?random=3',
+                                    contributor: 'Kamil Z.',
+                                    date: new Date().toISOString()
+                                },
+                                {
+                                    id: 4,
+                                    type: 'photo',
+                                    url: 'https://picsum.photos/500/500?random=4',
+                                    thumbnail: 'https://picsum.photos/500/500?random=4',
+                                    contributor: 'Monika S.',
+                                    date: new Date().toISOString()
+                                }
+                            ];
+                            renderGallery();
+                        }
+                    });
+            }
+            
+            // Filter and render gallery
+            function renderGallery() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const typeValue = typeFilter.value;
+                const sortValue = sortFilter.value;
+                
+                debugLog(`Rendering gallery with filters: search="${searchTerm}", type=${typeValue}, sort=${sortValue}`);
+                
+                // Filter items
+                let filteredItems = galleryItems.filter(item => {
+                    // Apply search filter (search in contributor name or message)
+                    const contributorMatch = item.contributor && item.contributor.toLowerCase().includes(searchTerm);
+                    const messageMatch = item.message && item.message.toLowerCase().includes(searchTerm);
+                    const matchesSearch = contributorMatch || messageMatch || searchTerm === '';
+                    
+                    // Apply type filter
+                    const matchesType = typeValue === 'all' || item.type === typeValue;
+                    
+                    return matchesSearch && matchesType;
+                });
+                
+                // Sort items
+                filteredItems.sort((a, b) => {
+                    const dateA = new Date(a.date);
+                    const dateB = new Date(b.date);
+                    
+                    return sortValue === 'newest' ? dateB - dateA : dateA - dateB;
+                });
+                
+                // Update gallery stats
+                const photoCount = filteredItems.filter(item => item.type === 'photo').length;
+                const videoCount = filteredItems.filter(item => item.type === 'video').length;
+                galleryStats.textContent = `Wyświetlanie ${filteredItems.length} elementów (${photoCount} zdjęć, ${videoCount} filmów)`;
+                
+                // Show/hide placeholder
+                if (filteredItems.length === 0) {
+                    galleryGrid.style.display = 'none';
+                    galleryPlaceholder.style.display = 'block';
+                } else {
+                    galleryGrid.style.display = 'grid';
+                    galleryPlaceholder.style.display = 'none';
+                }
+                
+                // Render gallery items
+                galleryGrid.innerHTML = '';
+                
+                debugLog(`Rendering ${filteredItems.length} items in the gallery grid`);
+                
+                filteredItems.forEach((item, index) => {
+                    try {
+                        const galleryItem = document.createElement('div');
+                        galleryItem.className = 'gallery-item';
+                        galleryItem.dataset.index = index;
+                        
+                        if (item.type === 'photo') {
+                            galleryItem.innerHTML = `
+                                <img src="${item.thumbnail}" alt="Zdjęcie weselne" class="gallery-image" loading="lazy">
+                                <div class="gallery-info">
+                                    <div class="gallery-contributor">${item.contributor || 'Gość weselny'}</div>
+                                    <div class="gallery-date">${formatDate(item.date)}</div>
+                                </div>
+                            `;
+                        } else if (item.type === 'video') {
+                            galleryItem.innerHTML = `
+                                <img src="${item.thumbnail}" alt="Miniatura filmu" class="gallery-video-thumbnail" loading="lazy">
+                                <div class="video-indicator">▶️</div>
+                                <div class="gallery-info">
+                                    <div class="gallery-contributor">${item.contributor || 'Gość weselny'}</div>
+                                    <div class="gallery-date">${formatDate(item.date)}</div>
+                                </div>
+                            `;
+                        }
+                        
+                        galleryItem.addEventListener('click', () => openLightbox(index, filteredItems));
+                        galleryGrid.appendChild(galleryItem);
+                    } catch (error) {
+                        debugLog(`Error rendering item ${index}: ${error.message}`);
+                    }
+                });
+            }
+            
+            // Format date
+            function formatDate(dateString) {
+                try {
+                    const date = new Date(dateString);
+                    return date.toLocaleDateString('pl-PL', { 
+                        day: '2-digit', 
+                        month: '2-digit', 
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                } catch (error) {
+                    debugLog(`Error formatting date "${dateString}": ${error.message}`);
+                    return 'Data nieznana';
+                }
+            }
+            
+            // Lightbox functionality
+            function openLightbox(index, items) {
+                debugLog(`Opening lightbox for item ${index}`);
+                currentLightboxIndex = index;
+                updateLightboxContent(items);
+                lightbox.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+            
+            function closeLightbox() {
+                debugLog('Closing lightbox');
+                lightbox.classList.remove('active');
+                document.body.style.overflow = '';
+                
+                // Stop video if playing
+                const video = lightboxContent.querySelector('video');
+                if (video) {
+                    video.pause();
+                }
+            }
+            
+            function updateLightboxContent(items) {
+                const item = items[currentLightboxIndex];
+                
+                debugLog(`Updating lightbox content for item ${currentLightboxIndex} (${item.type})`);
+                
+                try {
+                    if (item.type === 'photo') {
+                        lightboxContent.innerHTML = `<img src="${item.url}" alt="Zdjęcie weselne">`;
+                    } else if (item.type === 'video') {
+                        lightboxContent.innerHTML = `
+                            <video controls autoplay>
+                                <source src="${item.url}" type="video/mp4">
+                                Twoja przeglądarka nie obsługuje odtwarzania wideo.
+                            </video>
+                        `;
+                        
+                        // Add error handling for video
+                        const video = lightboxContent.querySelector('video');
+                        video.onerror = function() {
+                            debugLog(`Error loading video: ${item.url}`);
+                            lightboxContent.innerHTML = `
+                                <div style="color: white; padding: 20px;">
+                                    <p>Wystąpił błąd podczas ładowania filmu.</p>
+                                    <p>Spróbuj ponownie później lub skontaktuj się z administratorem.</p>
+                                </div>
+                            `;
+                        };
+                    }
+                    
+                    lightboxCaption.innerHTML = `
+                        <div>${item.contributor || 'Gość weselny'}</div>
+                        <div>${formatDate(item.date)}</div>
+                        ${item.message ? `<div style="margin-top: 10px; font-style: italic;">"${item.message}"</div>` : ''}
+                    `;
+                    
+                    // Update navigation visibility
+                    lightboxPrev.style.display = currentLightboxIndex > 0 ? 'block' : 'none';
+                    lightboxNext.style.display = currentLightboxIndex < items.length - 1 ? 'block' : 'none';
+                } catch (error) {
+                    debugLog(`Error updating lightbox: ${error.message}`);
+                    lightboxContent.innerHTML = `<div style="color: white; padding: 20px;">Wystąpił błąd podczas wyświetlania.</div>`;
+                }
+            }
+            
+            function navigateLightbox(direction, items) {
+                // Stop video if playing
+                const video = lightboxContent.querySelector('video');
+                if (video) {
+                    video.pause();
+                }
+                
+                currentLightboxIndex += direction;
+                
+                // Ensure index is within bounds
+                if (currentLightboxIndex < 0) {
+                    currentLightboxIndex = 0;
+                } else if (currentLightboxIndex >= items.length) {
+                    currentLightboxIndex = items.length - 1;
+                }
+                
+                debugLog(`Navigating lightbox to item ${currentLightboxIndex}`);
+                updateLightboxContent(items);
+            }
+            
+            // Event listeners
+            searchInput.addEventListener('input', () => {
+                renderGallery();
+            });
+            
+            typeFilter.addEventListener('change', () => {
+                renderGallery();
+            });
+            
+            sortFilter.addEventListener('change', () => {
+                renderGallery();
+            });
+            
+            lightboxClose.addEventListener('click', closeLightbox);
+            
+            lightboxPrev.addEventListener('click', () => {
+                const filteredItems = getFilteredItems();
+                navigateLightbox(-1, filteredItems);
+            });
+            
+            lightboxNext.addEventListener('click', () => {
+                const filteredItems = getFilteredItems();
+                navigateLightbox(1, filteredItems);
+            });
+            
+            // Close lightbox with escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+                    closeLightbox();
+                } else if (e.key === 'ArrowLeft' && lightbox.classList.contains('active')) {
+                    const filteredItems = getFilteredItems();
+                    navigateLightbox(-1, filteredItems);
+                } else if (e.key === 'ArrowRight' && lightbox.classList.contains('active')) {
+                    const filteredItems = getFilteredItems();
+                    navigateLightbox(1, filteredItems);
+                }
+            });
+            
+            // Helper function to get currently filtered items
+            function getFilteredItems() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const typeValue = typeFilter.value;
+                
+                return galleryItems.filter(item => {
+                    const contributorMatch = item.contributor && item.contributor.toLowerCase().includes(searchTerm);
+                    const messageMatch = item.message && item.message.toLowerCase().includes(searchTerm);
+                    const matchesSearch = contributorMatch || messageMatch || searchTerm === '';
+                    const matchesType = typeValue === 'all' || item.type === typeValue;
+                    
+                    return matchesSearch && matchesType;
+                });
+            }
+            
+            // Click outside lightbox content to close
+            lightbox.addEventListener('click', (e) => {
+                if (e.target === lightbox) {
+                    closeLightbox();
+                }
+            });
+            
+            debugLog('Gallery functionality initialized');
+        });
