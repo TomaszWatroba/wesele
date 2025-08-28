@@ -204,41 +204,18 @@
             font-size: 0.7rem;
         }
 
-        .upload-form-container {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            margin-top: 30px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            display: none;
+        .video-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            pointer-events: none;
         }
 
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 1rem;
-            transition: border-color 0.3s ease;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: #d63384;
-        }
-
-        .form-submit {
+        .submit-btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
@@ -248,12 +225,21 @@
             cursor: pointer;
             transition: all 0.3s ease;
             width: 100%;
-            margin-top: 10px;
+            margin-top: 20px;
+            font-size: 1.1rem;
+            display: none;
         }
 
-        .form-submit:hover {
+        .submit-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .submit-btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
 
         .tips-container {
@@ -287,34 +273,6 @@
             flex-shrink: 0;
         }
 
-        .video-indicator {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 2rem;
-            color: white;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-            pointer-events: none;
-        }
-        
-        /* Debug panel */
-        .debug-panel {
-            background: rgba(0, 0, 0, 0.8);
-            color: #0f0;
-            padding: 10px;
-            font-family: monospace;
-            font-size: 12px;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 9999;
-            display: none;
-        }
-
         @media (max-width: 600px) {
             .container {
                 padding: 20px 15px;
@@ -332,7 +290,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>📸 Podziel się zdjęciami i filmami z wesela</h1>
+        <h1>Dodaj zdjęcia i filmy</h1>
         
         <div class="nav-buttons">
             <a href="/" class="nav-button">
@@ -366,23 +324,9 @@
         
         <div class="preview-container" id="previewContainer"></div>
         
-        <div class="upload-form-container" id="uploadFormContainer">
-            <form id="metadataForm">
-                <div class="form-group">
-                    <label for="contributorName" class="form-label">Twoje imię (lub imiona)</label>
-                    <input type="text" id="contributorName" name="contributorName" class="form-input" required placeholder="np. Ania i Tomek">
-                </div>
-                
-                <div class="form-group">
-                    <label for="message" class="form-label">Wiadomość (opcjonalnie)</label>
-                    <textarea id="message" name="message" class="form-input" rows="3" placeholder="Kilka słów dla Młodej Pary..."></textarea>
-                </div>
-                
-                <button type="submit" class="form-submit" id="submitBtn">
-                    Prześlij do galerii weselnej
-                </button>
-            </form>
-        </div>
+        <button type="button" id="submitBtn" class="submit-btn">
+            Prześlij do galerii weselnej
+        </button>
         
         <div class="tips-container">
             <h3 class="tips-title">Wskazówki</h3>
@@ -391,34 +335,13 @@
                 <li>Możesz przesłać do 20 plików jednocześnie.</li>
                 <li>Zdjęcia i filmy mogą być przeglądane przez wszystkich gości.</li>
                 <li>Jeśli chcesz przesłać dużą liczbę zdjęć, możesz podzielić je na kilka grup.</li>
-                <li>Dodaj swoje imię, aby wszyscy wiedzieli, kto przesłał dane zdjęcia.</li>
+                <li>Dodaj swoje najlepsze ujęcia z wesela, aby stworzyć wspaniałą pamiątkę.</li>
             </ul>
         </div>
     </div>
-    
-    <!-- Debug panel -->
-    <div class="debug-panel" id="debugPanel"></div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Debug mode - set to true to enable
-            const DEBUG = true;
-            
-            // Debug functions
-            function debugLog(message) {
-                if (!DEBUG) return;
-                
-                const debugPanel = document.getElementById('debugPanel');
-                debugPanel.style.display = 'block';
-                
-                const logEntry = document.createElement('div');
-                logEntry.textContent = `[${new Date().toISOString()}] ${message}`;
-                debugPanel.appendChild(logEntry);
-                debugPanel.scrollTop = debugPanel.scrollHeight;
-                
-                console.log(message);
-            }
-            
             // Elements
             const uploadArea = document.getElementById('uploadArea');
             const fileInput = document.getElementById('fileInput');
@@ -427,23 +350,18 @@
             const progressBar = document.getElementById('progressBar');
             const status = document.getElementById('status');
             const previewContainer = document.getElementById('previewContainer');
-            const uploadFormContainer = document.getElementById('uploadFormContainer');
-            const metadataForm = document.getElementById('metadataForm');
             const submitBtn = document.getElementById('submitBtn');
-            
-            debugLog('DOM loaded - Starting upload functionality');
             
             // Selected files
             let selectedFiles = [];
+            let isUploading = false;
             
             // Event Listeners
             chooseFilesBtn.addEventListener('click', () => {
-                debugLog('Choose files button clicked');
                 fileInput.click();
             });
             
             fileInput.addEventListener('change', (e) => {
-                debugLog(`File input change event triggered - ${e.target.files.length} files selected`);
                 handleFileSelect(e);
             });
             
@@ -474,7 +392,6 @@
             }
             
             uploadArea.addEventListener('drop', (e) => {
-                debugLog('Files dropped');
                 handleDrop(e);
             });
             
@@ -484,10 +401,8 @@
                 handleFiles(files);
             }
             
-            // Form submission
-            metadataForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                debugLog('Form submitted');
+            // Submit button
+            submitBtn.addEventListener('click', function() {
                 uploadFiles();
             });
             
@@ -495,16 +410,14 @@
             function handleFileSelect(e) {
                 const files = e.target.files;
                 if (files.length === 0) {
-                    debugLog('No files selected');
                     return;
                 }
                 
-                debugLog(`Selected ${files.length} files`);
                 handleFiles(files);
             }
             
             function handleFiles(files) {
-                if (files.length === 0) return;
+                if (files.length === 0 || isUploading) return;
                 
                 // Validate files and add to selected files
                 Array.from(files).forEach(file => {
@@ -513,17 +426,13 @@
                     const isVideo = file.type.startsWith('video/');
                     const isHeic = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
                     
-                    debugLog(`Processing file: ${file.name}, type: ${file.type}, size: ${file.size}`);
-                    
                     if (!isImage && !isVideo && !isHeic) {
-                        debugLog(`File ${file.name} rejected - unsupported type`);
                         showStatus(`Plik ${file.name} nie jest obsługiwany. Dozwolone są tylko zdjęcia i filmy.`, 'error');
                         return;
                     }
                     
                     // Check file size (20MB max)
                     if (file.size > 20 * 1024 * 1024) {
-                        debugLog(`File ${file.name} rejected - too large (${file.size} bytes)`);
                         showStatus(`Plik ${file.name} jest za duży. Maksymalny rozmiar to 20MB.`, 'error');
                         return;
                     }
@@ -534,8 +443,6 @@
                         id: Date.now() + Math.random().toString(36).substr(2, 9),
                         type: isVideo ? 'video' : 'image'
                     });
-                    
-                    debugLog(`File ${file.name} added as ${isVideo ? 'video' : 'image'}`);
                 });
                 
                 // Reset file input
@@ -544,19 +451,17 @@
                 // Show previews
                 renderPreviews();
                 
-                // Show upload form if files are selected
+                // Show submit button if files are selected
                 if (selectedFiles.length > 0) {
-                    uploadFormContainer.style.display = 'block';
+                    submitBtn.style.display = 'block';
                 } else {
-                    uploadFormContainer.style.display = 'none';
+                    submitBtn.style.display = 'none';
                 }
             }
             
             // Render file previews
             function renderPreviews() {
                 previewContainer.innerHTML = '';
-                
-                debugLog(`Rendering ${selectedFiles.length} previews`);
                 
                 selectedFiles.forEach(fileObj => {
                     const preview = document.createElement('div');
@@ -589,15 +494,14 @@
                         // Handle HEIC files differently
                         if (fileObj.file.name.toLowerCase().endsWith('.heic') || fileObj.file.name.toLowerCase().endsWith('.heif')) {
                             img.src = '/img/heic-placeholder.jpg'; // A placeholder image for HEIC files
-                            debugLog(`Using placeholder for HEIC file: ${fileObj.file.name}`);
                         } else {
                             const reader = new FileReader();
                             reader.onload = (e) => {
                                 img.src = e.target.result;
-                                debugLog(`Image preview created for ${fileObj.file.name}`);
                             };
                             reader.onerror = (e) => {
-                                debugLog(`Error creating preview for ${fileObj.file.name}: ${e}`);
+                                // Use fallback for failed previews
+                                img.src = '/img/image-placeholder.jpg';
                             };
                             reader.readAsDataURL(fileObj.file);
                         }
@@ -610,12 +514,10 @@
                         
                         video.onloadedmetadata = function() {
                             // Jump to a point in the video to generate thumbnail
-                            debugLog(`Video metadata loaded for ${fileObj.file.name}`);
                             video.currentTime = 1.0;
                         };
                         
                         video.onseeked = function() {
-                            debugLog(`Video seeked for thumbnail: ${fileObj.file.name}`);
                             // Create a canvas and draw the video frame
                             const canvas = document.createElement('canvas');
                             canvas.width = video.videoWidth;
@@ -639,16 +541,38 @@
                         };
                         
                         video.onerror = function() {
-                            debugLog(`Error loading video for thumbnail: ${fileObj.file.name}`);
+                            // Use fallback for failed previews
+                            const img = document.createElement('img');
+                            img.src = '/img/video-placeholder.jpg';
+                            preview.appendChild(img);
+                            
+                            // Add video indicator
+                            const videoIndicator = document.createElement('div');
+                            videoIndicator.className = 'video-indicator';
+                            videoIndicator.textContent = '▶️';
+                            preview.appendChild(videoIndicator);
+                            
+                            // Remove the video element
+                            preview.querySelector('video').remove();
                         };
                         
                         // Set the video source
                         try {
                             const objectURL = URL.createObjectURL(fileObj.file);
                             video.src = objectURL;
-                            debugLog(`Video source set: ${fileObj.file.name}`);
                         } catch (e) {
-                            debugLog(`Error creating object URL for video: ${e}`);
+                            // Fallback for error
+                            const img = document.createElement('img');
+                            img.src = '/img/video-placeholder.jpg';
+                            preview.appendChild(img);
+                            
+                            // Add video indicator
+                            const videoIndicator = document.createElement('div');
+                            videoIndicator.className = 'video-indicator';
+                            videoIndicator.textContent = '▶️';
+                            preview.appendChild(videoIndicator);
+                            
+                            return;
                         }
                         
                         preview.appendChild(video);
@@ -684,13 +608,15 @@
             
             // Remove file from selection
             function removeFile(id) {
-                debugLog(`Removing file with id: ${id}`);
+                if (isUploading) return; // Cannot remove while uploading
+                
                 selectedFiles = selectedFiles.filter(fileObj => fileObj.id !== id);
                 renderPreviews();
                 
-                // Hide form if no files selected
+                // Hide submit button if no files selected
                 if (selectedFiles.length === 0) {
-                    uploadFormContainer.style.display = 'none';
+                    submitBtn.style.display = 'none';
+                    showStatus('');
                 }
             }
             
@@ -713,18 +639,16 @@
                 if (type) {
                     status.classList.add(type);
                 }
-                
-                debugLog(`Status updated: ${message} (${type})`);
             }
             
             // Upload files
             function uploadFiles() {
-                if (selectedFiles.length === 0) {
-                    showStatus('Nie wybrano żadnych plików', 'error');
+                if (selectedFiles.length === 0 || isUploading) {
                     return;
                 }
                 
-                debugLog(`Starting upload of ${selectedFiles.length} files`);
+                // Set uploading state
+                isUploading = true;
                 
                 // Disable submit button
                 submitBtn.disabled = true;
@@ -734,55 +658,43 @@
                 progressContainer.style.display = 'block';
                 progressBar.style.width = '0%';
                 
-                // Get form data
-                const contributorName = document.getElementById('contributorName').value;
-                const message = document.getElementById('message').value;
-                
-                debugLog(`Contributor: ${contributorName}, Message length: ${message.length}`);
-                
                 // Create FormData
                 const formData = new FormData();
-                formData.append('contributorName', contributorName);
-                formData.append('message', message);
+                formData.append('contributorName', 'Gość weselny'); // Default contributor name
                 
                 // Add files to FormData
                 selectedFiles.forEach(fileObj => {
                     formData.append('files', fileObj.file);
                     formData.append('fileTypes', fileObj.type);
-                    debugLog(`Added to form: ${fileObj.file.name} (${fileObj.type})`);
                 });
                 
                 // Upload files
-                debugLog('Sending upload request to /api/upload');
                 fetch('/api/upload', {
                     method: 'POST',
                     body: formData
                 })
                 .then(response => {
-                    debugLog(`Server response status: ${response.status}`);
                     if (!response.ok) {
                         throw new Error(`Wystąpił błąd podczas przesyłania plików (${response.status})`);
                     }
                     return response.json();
                 })
                 .then(data => {
-                    debugLog(`Upload successful: ${JSON.stringify(data)}`);
-                    
                     // Show success message
                     showStatus('Pliki zostały pomyślnie przesłane!', 'success');
                     
                     // Reset form
                     selectedFiles = [];
-                    metadataForm.reset();
                     renderPreviews();
-                    uploadFormContainer.style.display = 'none';
+                    submitBtn.style.display = 'none';
                     
                     // Hide progress bar after a delay
                     setTimeout(() => {
                         progressContainer.style.display = 'none';
                     }, 2000);
                     
-                    // Enable submit button
+                    // Reset uploading state
+                    isUploading = false;
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Prześlij do galerii weselnej';
                     
@@ -793,10 +705,10 @@
                 })
                 .catch(error => {
                     // Show error message
-                    debugLog(`Upload error: ${error.message}`);
                     showStatus(error.message, 'error');
                     
-                    // Enable submit button
+                    // Reset uploading state
+                    isUploading = false;
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Prześlij do galerii weselnej';
                     
@@ -821,8 +733,6 @@
                     }
                 }, 100);
             }
-            
-            debugLog('Upload functionality initialized');
         });
     </script>
 </body>

@@ -21,6 +21,12 @@ app.get('/menu', (req, res) => {
     coupleInfo: coupleInfo
   });
 });
+app.get('/timeline', (req, res) => {
+    // Render the timeline page
+});
 
+app.get('/providers', (req, res) => {
+    // Render the service providers page
+});
 
 module.exports = router;

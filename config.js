@@ -1,15 +1,16 @@
 // config.js - Complete configuration with admin password
 const path = require('path');
+require('dotenv').config();
 
 module.exports = {
     // Podstawowe ustawienia
     PORT: process.env.PORT || 3000,
-    EVENT_NAME: 'Nasze Wesele 2025', // ZMIEŃ NA SWOJĄ NAZWĘ
+    EVENT_NAME: 'Nasze Wesele 2025', // ZMIEÅƒ NA SWOJÄ„ NAZWÄ˜
     
     // *** ADMIN PASSWORD - CHANGE THIS IMMEDIATELY! ***
     ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'wedding2025!', // CHANGE THIS!
     
-    // Para młoda
+    // Para mÅ‚oda
     COUPLE_NAMES: {
         bride: "Gosia",
         groom: "Tomek"
@@ -24,29 +25,30 @@ module.exports = {
     PUBLIC_URL: process.env.PUBLIC_URL || null, // Will be set dynamically
     CUSTOM_DOMAIN: process.env.CUSTOM_DOMAIN || 'gosiaitomek.pl', // Your custom domain
     
-    // Ścieżki
+    // ÅšcieÅ¼ki
     UPLOADS_DIR: path.join(__dirname, 'wedding-photos'),
     LOG_FILE: path.join(__dirname, 'wedding-log.txt'),
     
-    // Limity plików
-    MAX_FILE_SIZE: 200 * 1024 * 1024, // 200MB
-    MAX_FILES_PER_UPLOAD: 10,
+    // Limity plikÃ³w - INCREASED FOR LONGER VIDEOS
+MAX_FILE_SIZE: 4000 * 1024 * 1024, // 4GB (increased from 2GB)
+UPLOAD_TIMEOUT: 10 * 60 * 1000, // 10 minutes // 4GB (increased from 2GB) // 4GB (increased from 2GB)
+    MAX_FILES_PER_UPLOAD: 20,
     
     // Rate limiting
     RATE_LIMIT: {
         WINDOW_MS: 5 * 60 * 1000, // 5 minut
-        MAX_UPLOADS: 20 // 20 przesyłań na okno czasowe
+        MAX_UPLOADS: 20 // 20 przesyÅ‚aÅ„ na okno czasowe
     },
     
-    // Dozwolone typy plików - WSZYSTKIE formaty mobilne
+    // Dozwolone typy plikÃ³w - WSZYSTKIE formaty mobilne
     ALLOWED_FILE_TYPES: [
-        // Zdjęcia - standardowe
+        // ZdjÄ™cia - standardowe
         'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
-        // Zdjęcia - iPhone/mobilne
+        // ZdjÄ™cia - iPhone/mobilne
         'image/heic', 'image/heif', 'image/heics', 'image/heifs',
-        // Zdjęcia - inne mobilne formaty
+        // ZdjÄ™cia - inne mobilne formaty
         'image/avif', 'image/jfif', 'image/pjpeg', 'image/svg+xml',
-        // Zdjęcia - raw formaty (niektóre telefony)
+        // ZdjÄ™cia - raw formaty (niektÃ³re telefony)
         'image/tiff', 'image/bmp', 'image/x-icon',
         // Filmy - standardowe
         'video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo',
@@ -56,9 +58,9 @@ module.exports = {
         'video/avi', 'video/mkv', 'video/webm', 'video/ogg', 'video/wmv'
     ],
     
-    // Rozszerzenia plików - wszystkie mobilne
+    // Rozszerzenia plikÃ³w - wszystkie mobilne
     ALLOWED_EXTENSIONS: [
-        // Zdjęcia
+        // ZdjÄ™cia
         '.jpg', '.jpeg', '.png', '.gif', '.webp', 
         '.heic', '.heif', '.heics', '.heifs', '.avif',
         '.jfif', '.pjpeg', '.tiff', '.tif', '.bmp',
@@ -72,24 +74,24 @@ module.exports = {
         {
             category: "Przystawki",
             items: [
-                "Carpaccio z łososia z kaparami",
-                "Bruschetta z pomidorami i bazylią",
-                "Tartar z tuńczyka"
+                "Carpaccio z Å‚ososia z kaparami",
+                "Bruschetta z pomidorami i bazyliÄ…",
+                "Tartar z tuÅ„czyka"
             ]
         },
         {
             category: "Zupy",
             items: [
-                "Żurek na żeberkach",
+                "Å»urek na Å¼eberkach",
                 "Krem z dyni z grzankami"
             ]
         },
         {
-            category: "Dania główne",
+            category: "Dania gÅ‚Ã³wne",
             items: [
-                "Stek wołowy z ziemniakami grillowanymi",
-                "Łosoś z warzywami sezonowymi",
-                "Pierś z kaczki z sosem wiśniowym"
+                "Stek woÅ‚owy z ziemniakami grillowanymi",
+                "ÅosoÅ› z warzywami sezonowymi",
+                "PierÅ› z kaczki z sosem wiÅ›niowym"
             ]
         },
         {
@@ -105,7 +107,7 @@ module.exports = {
     // Drinks configuration
     DRINKS: [
         {
-            category: "Wina białe",
+            category: "Wina biaÅ‚e",
             items: [
                 "Chardonnay",
                 "Sauvignon Blanc",
@@ -153,8 +155,8 @@ module.exports = {
         errorCorrectionLevel: 'M'
     },
     
-    // Timeout dla upload (5 minut)
-    UPLOAD_TIMEOUT: 5 * 60 * 1000,
+    // Timeout dla upload (10 minut - zwiększone z 5 minut)
+    UPLOAD_TIMEOUT: 10 * 60 * 1000, // 10 minutes (increased from 5 minutes)
     
     // Function to get the correct base URL
     getBaseURL: function(req) {
