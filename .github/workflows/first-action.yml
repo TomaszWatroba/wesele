@@ -2,9 +2,9 @@ name: First Workflow
 on: workflow_dispatch
 jobs: 
   first-job:
-    runs-on: ubuntu-lastest
+    runs-on: ubuntu-latest  # Fixed: ubuntu-latest instead of ubuntu-lastest
     steps:
       - name: Print greeting
         run: echo "Hello World"
-      - name: Print goodbey
-        run: echo "Done -bye"
+      - name: Print goodbye  # Also fixed the typo in "goodbye"
+        run: echo "Done - bye"
