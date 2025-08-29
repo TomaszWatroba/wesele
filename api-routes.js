@@ -8,6 +8,7 @@ const sharp = require('sharp');
 const ffmpeg = require('fluent-ffmpeg');
 const config = require('./config');
 const { logActivity, logError } = require('./utils');
+const QRCode = require('qrcode');
 
 const router = express.Router();
 
@@ -188,6 +189,250 @@ router.post('/upload', upload.array('files'), async (req, res) => {
         logError(error, 'Failed to upload files', req.requestId);
         res.status(500).json({ error: 'Failed to upload files' });
     }
+});
+
+// ADDED: Get public URL for QR codes and other features
+router.get('/public-url', (req, res) => {
+    try {
+        const forceTunnel = req.query.force === 'tunnel';
+        
+        // Determine if using HTTPS or custom domain
+        const host = req.get('Host') || '';
+        const isHttps = req.secure || req.get('x-forwarded-proto') === 'https';
+        const isCustomDomain = host.includes(config.DOMAIN);
+        
+        // Always consider tunnel active for admin panel
+        const tunnelActive = true;
+        
+        // Get base URLs for different pages
+        const protocol = tunnelActive || isHttps ? 'https' : 'http';
+        const domain = tunnelActive ? config.DOMAIN : host;
+        
+        const baseURL = `${protocol}://${domain}`;
+        const uploadURL = `${baseURL}/photos`;
+        const mainPageURL = baseURL;
+        
+        logActivity('INFO', 'Public URL generated', 
+            `Base: ${baseURL}, Upload: ${uploadURL}`, req.requestId);
+        
+        res.json({
+            baseURL,
+            uploadURL,
+            mainPageURL,
+            tunnelActive
+        });
+    } catch (error) {
+        logError(error, 'Failed to get public URL', req.requestId);
+        res.status(500).json({ error: 'Failed to get public URL' });
+    }
+});
+
+// ADDED: Generate QR code for upload page
+router.get('/qr-upload', async (req, res) => {
+    try {
+        const protocol = req.secure || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
+        const host = req.get('Host') || config.DOMAIN;
+        const uploadURL = `${protocol}://${host}/photos`;
+        
+        // Generate QR code
+        const qrOptions = {
+            errorCorrectionLevel: 'M',
+            type: 'image/png',
+            quality: 0.92,
+            margin: 1,
+            color: {
+                dark: '#000000',
+                light: '#FFFFFF'
+            }
+        };
+        
+        const qrCode = await QRCode.toDataURL(uploadURL, qrOptions);
+        
+        logActivity('INFO', 'QR code generated for upload page', uploadURL, req.requestId);
+        
+        res.json({
+            success: true,
+            qrCode,
+            uploadUrl: uploadURL,
+            message: 'QR code generated successfully! Share with guests.'
+        });
+    } catch (error) {
+        logError(error, 'Failed to generate QR code', req.requestId);
+        res.status(500).json({ error: 'Failed to generate QR code' });
+    }
+});
+
+// ADDED: Generate QR code for main page
+router.get('/qr-download', async (req, res) => {
+    try {
+        const protocol = req.secure || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
+        const host = req.get('Host') || config.DOMAIN;
+        const mainPageURL = `${protocol}://${host}`;
+        
+        // Generate QR code
+        const qrOptions = {
+            errorCorrectionLevel: 'M',
+            type: 'image/png',
+            quality: 0.92,
+            margin: 1,
+            color: {
+                dark: '#000000',
+                light: '#FFFFFF'
+            }
+        };
+        
+        const qrCode = await QRCode.toDataURL(mainPageURL, qrOptions);
+        
+        logActivity('INFO', 'QR code generated for main page', mainPageURL, req.requestId);
+        
+        res.json({
+            success: true,
+            qrCode,
+            url: mainPageURL,
+            message: 'QR code generated successfully! Points to main page.'
+        });
+    } catch (error) {
+        logError(error, 'Failed to generate QR code', req.requestId);
+        res.status(500).json({ error: 'Failed to generate QR code' });
+    }
+});
+
+// ADDED: Get list of uploaded files
+router.get('/files', (req, res) => {
+    try {
+        const files = [];
+        
+        // Check if directory exists
+        if (!fs.existsSync(config.UPLOADS_DIR)) {
+            logActivity('WARN', 'Uploads directory does not exist', config.UPLOADS_DIR, req.requestId);
+            return res.json([]);
+        }
+        
+        // Read directory
+        const fileList = fs.readdirSync(config.UPLOADS_DIR);
+        
+        // Skip thumbnails directory and hidden files
+        const filteredFiles = fileList.filter(file => 
+            file !== 'thumbnails' && !file.startsWith('.'));
+        
+        // Process each file
+        for (const filename of filteredFiles) {
+            const filePath = path.join(config.UPLOADS_DIR, filename);
+            const stats = fs.statSync(filePath);
+            
+            if (stats.isFile()) {
+                const extension = path.extname(filename).toLowerCase();
+                const isImage = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.heic', '.heif'].includes(extension);
+                const isVideo = ['.mp4', '.mov', '.avi', '.webm'].includes(extension);
+                
+                if (isImage || isVideo) {
+                    files.push({
+                        name: filename,
+                        size: stats.size,
+                        created: stats.mtime,
+                        type: isImage ? 'image/' + extension.substring(1) : 'video/' + extension.substring(1)
+                    });
+                }
+            }
+        }
+        
+        // Sort by date (newest first)
+        files.sort((a, b) => new Date(b.created) - new Date(a.created));
+        
+        logActivity('INFO', `Retrieved ${files.length} files from uploads directory`, '', req.requestId);
+        res.json(files);
+    } catch (error) {
+        logError(error, 'Failed to get files', req.requestId);
+        res.status(500).json({ error: 'Failed to get files' });
+    }
+});
+
+// ADDED: Download all files as ZIP
+router.get('/download-all', (req, res) => {
+    try {
+        // Check if directory exists
+        if (!fs.existsSync(config.UPLOADS_DIR)) {
+            return res.status(404).json({ error: 'Uploads directory not found' });
+        }
+        
+        // Create zip stream
+        const archiver = require('archiver');
+        const archive = archiver('zip', {
+            zlib: { level: 5 } // Compression level
+        });
+        
+        // Set headers
+        res.setHeader('Content-Type', 'application/zip');
+        res.setHeader('Content-Disposition', 'attachment; filename=wedding-photos.zip');
+        
+        // Pipe the zip to the response
+        archive.pipe(res);
+        
+        // Read directory
+        const fileList = fs.readdirSync(config.UPLOADS_DIR);
+        
+        // Skip thumbnails directory and hidden files
+        const filteredFiles = fileList.filter(file => 
+            file !== 'thumbnails' && !file.startsWith('.'));
+        
+        // Add each file to the zip
+        for (const filename of filteredFiles) {
+            const filePath = path.join(config.UPLOADS_DIR, filename);
+            const stats = fs.statSync(filePath);
+            
+            if (stats.isFile()) {
+                const extension = path.extname(filename).toLowerCase();
+                const isImage = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.heic', '.heif'].includes(extension);
+                const isVideo = ['.mp4', '.mov', '.avi', '.webm'].includes(extension);
+                
+                if (isImage || isVideo) {
+                    // Add file to the zip
+                    archive.file(filePath, { name: filename });
+                }
+            }
+        }
+        
+        // Finalize the zip
+        archive.finalize();
+        
+        logActivity('INFO', 'Download all files initiated', '', req.requestId);
+    } catch (error) {
+        logError(error, 'Failed to create zip', req.requestId);
+        res.status(500).json({ error: 'Failed to create zip' });
+    }
+});
+
+// ADDED: Get preview image for file
+router.get('/preview/:filename', (req, res) => {
+    try {
+        const { filename } = req.params;
+        const size = req.query.size || '200';
+        
+        const thumbnailsDir = path.join(config.UPLOADS_DIR, 'thumbnails');
+        
+        // Check if thumbnail exists
+        const thumbnailPath = path.join(thumbnailsDir, 'thumb_' + filename);
+        if (fs.existsSync(thumbnailPath)) {
+            return res.sendFile(thumbnailPath);
+        }
+        
+        // If thumbnail doesn't exist, try to send the original file
+        const filePath = path.join(config.UPLOADS_DIR, filename);
+        if (fs.existsSync(filePath)) {
+            return res.sendFile(filePath);
+        }
+        
+        // If file doesn't exist, send a placeholder
+        res.status(404).send('File not found');
+    } catch (error) {
+        logError(error, 'Failed to get preview', req.requestId);
+        res.status(500).send('Failed to get preview');
+    }
+});
+
+// Health check endpoint
+router.get('/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 module.exports = router;
